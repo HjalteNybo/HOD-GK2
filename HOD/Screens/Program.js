@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, FlatList, Pressable } from "react-native";
 import Styles from "../Styles/ProgramStyles";
 import {GlobalStyles} from "../Styles/GlobalStyles";
