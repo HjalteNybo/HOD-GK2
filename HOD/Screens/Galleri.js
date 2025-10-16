@@ -86,9 +86,14 @@ export default function Galleri({ navigation }) {
     );
   }
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item, index }) => (
     <Pressable
-      onPress={() => navigation.navigate('MediaViewer', { media: item })}
+      onPress={() =>
+        navigation.navigate('MediaViewer', {
+          items,           // hele listen (du loader max 60 – helt fint)
+          startIndex: index
+        })
+      }
       style={[s.tile, { width: size, height: size, margin: GAP / 2 }]} // ← halv margin
     >
       <Image

@@ -1,64 +1,170 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView } from 'react-native';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect } from 'react';
+import { View, Text, FlatList, Image, Dimensions, ActivityIndicator, StyleSheet } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VideoView, useVideoPlayer } from 'expo-video';
 
-export default function MediaViewer({ route }) {
-  const media = route?.params?.media;
-  if (!media?.downloadURL) {
-    return (
-      <View style={s.center}><Text>Intet medie fundet.</Text></View>
-    );
-  }
-
-  const isVideo = media.type === 'video';
-
-  // Opret videoafspilleren når URL'en ændrer sig
-  const player = useVideoPlayer(media.downloadURL, (p) => {
-    p.play(); // autoplay i viewer
+function Slide({ item, isActive, width, height }) {
+  const isVideo = item?.type === 'video';
+  const player = useVideoPlayer(isVideo ? item.downloadURL : null, (p) => {
+    if (isActive) p.play();
   });
 
-  const dateStr = media.uploadedAtMillis
-    ? new Date(media.uploadedAtMillis).toLocaleString()
-    : '';
+  useEffect(() => {
+    if (!isVideo || !player) return;
+    if (isActive) player.play();
+    else player.pause();
+  }, [isActive, isVideo, player]);
 
   return (
-    <ScrollView contentContainerStyle={s.container}>
-      <View style={s.mediaBox}>
-        {isVideo ? (
-          <VideoView
-            style={s.media}
-            player={player}
-            allowsFullscreen
-            allowsPictureInPicture
-            contentFit="contain"
-          />
-        ) : (
-          <Image
-            source={{ uri: media.downloadURL }}
-            style={s.media}
-            resizeMode="contain"
-            accessible
-            accessibilityLabel={media.caption || 'Billede'}
-          />
-        )}
-      </View>
-
-      {!!media.caption && (
-        <Text style={s.caption}>{media.caption}</Text>
+    <View style={[styles.slide, { width, height }]}>
+      {isVideo ? (
+        <VideoView
+          style={styles.media}
+          player={player}
+          allowsFullscreen
+          allowsPictureInPicture
+          contentFit="contain"
+        />
+      ) : (
+        <Image
+          source={{ uri: item.downloadURL }}
+          style={styles.media}
+          resizeMode="contain"
+          accessible
+          accessibilityLabel={item.caption || 'Billede'}
+        />
       )}
-      <Text style={s.meta}>
-        {media.uploadedByEmail ? `Uploadet af ${media.uploadedByEmail}` : 'Uploadet'}
-        {dateStr ? ` — ${dateStr}` : ''}
-      </Text>
-    </ScrollView>
+    </View>
   );
 }
 
-const s = StyleSheet.create({
-  container: { padding: 16 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
-  mediaBox: { borderRadius: 16, overflow: 'hidden', backgroundColor: '#000' },
-  media: { width: '100%', height: 320 },
-  caption: { marginTop: 12, fontSize: 16 },
-  meta: { marginTop: 6, color: '#64748B' },
+export default function MediaViewer({ route, navigation }) {
+  const insets = useSafeAreaInsets();
+
+  // Bagudkompatibel med tidligere navigation: enten {items, startIndex} eller bare {media}
+  const incomingMedia = route?.params?.media;
+  const incomingItems = route?.params?.items;
+  const startIndexParam = route?.params?.startIndex ?? 0;
+
+  const items = useMemo(() => {
+    if (Array.isArray(incomingItems) && incomingItems.length) return incomingItems;
+    if (incomingMedia) return [incomingMedia];
+    return [];
+  }, [incomingItems, incomingMedia]);
+
+  const [index, setIndex] = useState(
+    Math.min(Math.max(startIndexParam, 0), Math.max(items.length - 1, 0))
+  );
+
+  const flatRef = useRef(null);
+  const { width, height } = Dimensions.get('window');
+
+  const getItemLayout = useCallback(
+    (_data, i) => ({ length: width, offset: width * i, index: i }),
+    [width]
+  );
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: items.length ? `${index + 1} / ${items.length}` : 'Galleri',
+      headerLargeTitle: false,
+      headerTintColor: '#fff',
+      headerStyle: { backgroundColor: '#000' },
+    });
+  }, [index, items.length, navigation]);
+
+  const viewabilityConfig = useMemo(() => ({ itemVisiblePercentThreshold: 50 }), []);
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    if (viewableItems?.length) {
+      setIndex(viewableItems[0].index ?? 0);
+    }
+  });
+
+  const onScrollToIndexFailed = useCallback((info) => {
+    setTimeout(() => {
+      flatRef.current?.scrollToIndex({ index: info.index, animated: false });
+    }, 10);
+  }, []);
+
+  if (!items.length) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <ActivityIndicator />
+        <Text style={{ marginTop: 8 }}>Indlæser…</Text>
+      </SafeAreaView>
+    );
+  }
+
+  const current = items[index] || {};
+
+  const dateStr = current.uploadedAtMillis
+    ? new Date(current.uploadedAtMillis).toLocaleString()
+    : '';
+
+  return (
+    <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
+      {/* SWIPER – fylder alt pladsen over footeren */}
+      <View style={styles.swiperArea}>
+        <FlatList
+          ref={flatRef}
+          data={items}
+          keyExtractor={(it) => it.id}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item, index: i }) => (
+            <Slide item={item} isActive={i === index} width={width} height={height} />
+          )}
+          initialScrollIndex={index}
+          getItemLayout={getItemLayout}
+          onScrollToIndexFailed={onScrollToIndexFailed}
+          removeClippedSubviews
+          windowSize={3}
+          viewabilityConfig={viewabilityConfig}
+          onViewableItemsChanged={onViewableItemsChanged.current}
+        />
+      </View>
+
+      {/* FOOTER – caption/meta under billedet (ikke overlay), så mediet forbliver centreret */}
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+        {!!current.caption && <Text style={styles.caption}>{current.caption}</Text>}
+        <Text style={styles.meta}>
+          {current.uploadedByEmail ? `Uploadet af ${current.uploadedByEmail}` : 'Uploadet'}
+          {dateStr ? ` — ${dateStr}` : ''}
+        </Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#000' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  swiperArea: { flex: 1, backgroundColor: '#000' },
+
+  // VIGTIGT: ingen fast height – lad den arve højden fra swiperArea
+  slide: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#000' },
+
+  // Mediet fylder hele sliden; 'contain' centrerer indholdet symmetrisk
+  media: { width: '100%', height: '100%' },
+
+  footer: {
+    paddingTop: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#000',
+  },
+  caption: {
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 6,
+    opacity: 0.98,
+    fontSize: 16,
+  },
+  meta: {
+    color: '#cbd5e1',
+    textAlign: 'center',
+    fontSize: 12,
+    opacity: 0.9,
+  },
 });

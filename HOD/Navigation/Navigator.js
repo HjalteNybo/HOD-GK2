@@ -41,6 +41,7 @@ function PersonaleStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="StaffLogin" component={Login} />
       <Stack.Screen name="Upload" component={Upload} />
+      <Stack.Screen name="MediaViewer" component={MediaViewer}options={{ headerShown: true, headerTransparent: false, headerTintColor: '#fff', headerStyle: { backgroundColor: '#000' } }}/>
     </Stack.Navigator>
   );
 }
