@@ -1,52 +1,60 @@
 import React from "react";
-import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
-import {createNativeStackNavigator} from "@react-navigation/native-stack";
-import {Ionicons} from "@expo/vector-icons";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 
 import Home from "../Screens/Home";
 import Program from "../Screens/Program";
-import EventDetails from "../Screens/EventDetails";
 import Forum from "../Screens/Forum";
+import ActivityDetails from "../Screens/ActivityDetails";
+import Login from "../Screens/Login";
+import Upload from '../Screens/Uploads';
 
-//de to typer navigationssystemer
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Program-stack: Liste -> Detalje
 function ProgramStack() {
-    return (
-        <Stack.Navigator>
-      <Stack.Screen name="ProgramList" component={Program} options={{ title: 'Program' }} />
-      <Stack.Screen name="EventDetails" component={EventDetails} options={{ title: 'Aktivitet' }} />
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ProgramList" component={Program} />
+      <Stack.Screen name="ActivityDetails" component={ActivityDetails} />
     </Stack.Navigator>
-    );
-};
+  );
+}
 
-// Hovednavigatoren med bundfaner
+function PersonaleStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="StaffLogin" component={Login} />
+      <Stack.Screen name="Upload" component={Upload} />
+    </Stack.Navigator>
+  );
+}
+
 export default function Navigator() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={({ route }) => ({
-        headerShown: true,
+        // VALGFRIT: lad Stack styre headers
+        headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarLabelStyle: { fontSize: 12 },
         tabBarIcon: ({ focused, size, color }) => {
-          let icon = 'home';
-          if (route.name === 'Home') icon = focused ? 'home' : 'home-outline';
-          if (route.name === 'Program') icon = focused ? 'list' : 'list-outline';
-          if (route.name === 'Forum') icon = focused ? 'chatbubbles' : 'chatbubbles-outline';
+          let icon = "home";
+          if (route.name === "Home") icon = focused ? "home" : "home-outline";
+          if (route.name === "Program") icon = focused ? "list" : "list-outline";
+          if (route.name === "Forum") icon = focused ? "chatbubbles" : "chatbubbles-outline";
           return <Ionicons name={icon} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#3558A6',
-        tabBarInactiveTintColor: '#64748B',
+        tabBarActiveTintColor: "#3558A6",
+        tabBarInactiveTintColor: "#64748B",
       })}
-      sceneContainerStyle={{ backgroundColor: '#FFFFFF' }}
     >
-         {/* Faner i bundnavigationen */}
-      <Tab.Screen name="Home" component={Home} options={{ tabBarAccessibilityLabel: 'Gå til Hjem' }} />
-      <Tab.Screen name="Program" component={ProgramStack} options={{ tabBarAccessibilityLabel: 'Gå til Program' }} />
-      <Tab.Screen name="Forum" component={Forum} options={{ tabBarAccessibilityLabel: 'Gå til Forum' }} />
+      <Tab.Screen name="Home" component={Home} options={{ tabBarAccessibilityLabel: "Gå til Hjem" }} />
+      <Tab.Screen name="Program" component={ProgramStack} options={{ tabBarAccessibilityLabel: "Gå til Program" }} />
+      <Tab.Screen name="Forum" component={Forum} options={{ tabBarAccessibilityLabel: "Gå til Forum" }} />
+      <Tab.Screen name="Personale" component={PersonaleStack} options={{ tabBarAccessibilityLabel: 'Personale login' }} />
     </Tab.Navigator>
   );
-};
+}

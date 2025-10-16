@@ -4,7 +4,17 @@ export const colors = {
   bg: '#FFFFFF',
   text: '#0F172A',
   muted: '#64748B',
-  primary: '#3558A6'
+  primary: '#3558A6',
+  //Det er disse farver der skal bruges i appen(nedenfor)
+  background: '#F5E8C8',
+  surface: '#FFFFFF',
+  primary: '#3E6B39',
+  secondary: '#F28C38',
+  accent: '#F6C65B',
+  text: '#1E1E1E',
+  mutedText: '#5C7E8C',
+  alert: '#C23B22',
+  success: '#B9D08B',
 };
 
 export const spacing = {

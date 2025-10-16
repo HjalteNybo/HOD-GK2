@@ -1,26 +1,142 @@
-import { StyleSheet } from 'react-native';
-import { colors, spacing, font } from './GlobalStyles';
+import { StyleSheet } from "react-native";
+
+const Colors = {
+  background: "#F5E8C8", // sand/beige
+  surface: "#FFFFFF",
+  primary: "#3E6B39",    // mørk skovgrøn
+  secondary: "#F28C38",  // varm orange
+  accent: "#F6C65B",     // gul (badges)
+  text: "#1E1E1E",
+  mutedText: "#5C7E8C",
+  alert: "#C23B22",
+  success: "#B9D08B",
+};
 
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
-    padding: spacing.md
+    backgroundColor: Colors.background,
+    padding: 16,
   },
-  row: {
-    paddingVertical: spacing.md
+  header: {
+    marginBottom: 8,
   },
-  rowTitle: {
-    fontSize: font.body + 2,
-    fontWeight: '600',
-    color: colors.text
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: Colors.text,
   },
-  rowMeta: {
-    marginTop: 4,
-    color: colors.muted
+  sub: {
+    color: Colors.mutedText,
+    marginTop: 2,
+    marginBottom: 8,
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#E2E8F0'
-  }
+
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: Colors.primary,
+    marginVertical: 6,
+  },
+
+  /* Scheduled cards */
+  card: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#D9C9A6",
+  },
+  cardPressed: { opacity: 0.9 },
+  cardRowTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  time: {
+    fontWeight: "700",
+    color: Colors.text,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  place: {
+    color: Colors.mutedText,
+  },
+
+  badge: {
+    marginLeft: "auto",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    fontWeight: "800",
+    overflow: "hidden",
+  },
+  badgeNow: {
+    backgroundColor: Colors.accent,
+    color: Colors.text,
+  },
+  badgeNext: {
+    backgroundColor: Colors.accent,
+    color: Colors.text,
+  },
+
+  /* All-day section */
+  allDayHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  allDayPill: {
+    marginLeft: 8,
+    backgroundColor: Colors.secondary,
+    color: "#FFFFFF",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    fontWeight: "800",
+    overflow: "hidden",
+  },
+  miniCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#D9C9A6",
+  },
+  miniTitle: {
+    fontWeight: "800",
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  miniMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  miniTime: {
+    color: Colors.mutedText,
+  },
+  badgeChip: {
+    marginLeft: "auto",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    fontWeight: "800",
+    overflow: "hidden",
+  },
+  badgeAllDay: {
+    backgroundColor: Colors.secondary,
+    color: "#FFFFFF",
+  },
 });

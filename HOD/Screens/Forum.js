@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, FlatList } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from "../Styles/ForumStyles";
 
 // Forum-komponenten
@@ -17,6 +18,7 @@ export default function Forum() {
     };
 
     return (
+        <SafeAreaView style={Styles.container} edges={['top', 'left', 'right']}>
         <View style={Styles.container}>
             {/* Input felt */}
             <TextInput
@@ -48,6 +50,7 @@ export default function Forum() {
                 />
             )}
         </View>
+        </SafeAreaView>
     );
 
 };
