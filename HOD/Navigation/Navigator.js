@@ -67,9 +67,9 @@ export default function Navigator() {
     >
       <Tab.Screen name="Home" component={Home} options={{ tabBarAccessibilityLabel: "Gå til Hjem" }} />
       <Tab.Screen name="Program" component={ProgramStack} options={{ tabBarAccessibilityLabel: "Gå til Program" }} />
+      <Tab.Screen name="Pladsen" component={MapScreen} options={{ tabBarAccessibilityLabel: 'Gå til Pladsen', title: 'Pladsen' }}/>
       <Tab.Screen name="Galleri" component={GalleryStack} options={{ tabBarAccessibilityLabel: "Gå til Galleri" }}/>
       <Tab.Screen name="Personale" component={PersonaleStack} options={{ tabBarAccessibilityLabel: 'Personale login' }} />
-      <Tab.Screen name="Pladsen" component={MapScreen} options={{ tabBarAccessibilityLabel: 'Gå til Pladsen', title: 'Pladsen' }}/>
     </Tab.Navigator>
   );
 }
