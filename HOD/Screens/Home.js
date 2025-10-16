@@ -232,7 +232,7 @@ export default function Home({ navigation }) {
 
         <Pressable
           style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Kort')} // kommer senere
+          onPress={() => navigation.navigate('Pladsen')} 
           accessibilityRole="button"
           accessibilityLabel="Åbn kort"
         >

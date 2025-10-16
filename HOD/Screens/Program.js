@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { View, Text, FlatList, Pressable } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from "../Styles/ProgramStyles";
+import { useRoute } from "@react-navigation/native";
 
 /* ===== Helpers ===== */
 function getFestivalDate(year) {
@@ -57,6 +58,9 @@ const allDayActivities = [
 
 export default function Program({ navigation }) {
   const now = new Date();
+  const route = useRoute();
+  const boothId = route?.params?.boothId || null;
+
 
   const festivalDate = useMemo(() => {
     const thisYear = getFestivalDate(now.getFullYear());
@@ -71,6 +75,17 @@ export default function Program({ navigation }) {
     () => scheduled.slice().sort((a, b) => a.start - b.start),
     [scheduled]
   );
+
+  // Filtrering efter valgt bod/event fra kortet 
+  const filteredItems = useMemo(() => {
+    if (!boothId) return items; // vis alt hvis ikke fra kortet
+    // match på place-feltet (fx "Scene", "Telt A", "Fællesområde", osv.)
+    return items.filter(
+      (it) =>
+        it.place?.toLowerCase() === boothId.toLowerCase() ||
+        it.title?.toLowerCase().includes(boothId.toLowerCase())
+    );
+  }, [boothId, items]);
 
   const isFestivalDay = isSameCalendarDay(now, open);
   // find første kommende for “NÆSTE” badge
@@ -99,8 +114,8 @@ export default function Program({ navigation }) {
               timeLabel: `${fmtHM(item.start)}–${fmtHM(item.end)}`,          // string
               place: item.place,  // string
               description: '',    // valgfrit felt, hold det som string
-  },
-})
+            },
+          })
         }
         style={({ pressed }) => [Styles.card, pressed && Styles.cardPressed]}
         accessibilityRole="button"
@@ -128,7 +143,7 @@ export default function Program({ navigation }) {
             timeLabel: 'Hele dagen', // <- string
             description: item.description || '',
           },
-      })
+        })
       }
       style={({ pressed }) => [Styles.miniCard, pressed && Styles.cardPressed]}
       accessibilityRole="button"
@@ -144,36 +159,36 @@ export default function Program({ navigation }) {
 
   return (
     <SafeAreaView style={Styles.container} edges={['top', 'left', 'right']}>
-    <View style={Styles.container}>
-      {/* Header */}
-      <View style={Styles.header}>
-        <Text style={Styles.pageTitle}>Dagens program</Text>
-        <Text style={Styles.sub}>
-          {niceDate} • Åbent {fmtHM(open)}–{fmtHM(close)}
-        </Text>
-      </View>
+      <View style={Styles.container}>
+        {/* Header */}
+        <View style={Styles.header}>
+          <Text style={Styles.pageTitle}>Dagens program</Text>
+          <Text style={Styles.sub}>
+            {niceDate} • Åbent {fmtHM(open)}–{fmtHM(close)}
+          </Text>
+        </View>
 
-      {/* Tidsplan */}
-      <Text style={Styles.sectionHeader}>Tidsplan</Text>
-      <FlatList
-        data={items}
-        keyExtractor={(it) => it.id}
-        renderItem={renderScheduled}
-        contentContainerStyle={{ paddingBottom: 12 }}
-      />
+        {/* Tidsplan */}
+        <Text style={Styles.sectionHeader}>Tidsplan</Text>
+        <FlatList
+          data={items}
+          keyExtractor={(it) => it.id}
+          renderItem={renderScheduled}
+          contentContainerStyle={{ paddingBottom: 12 }}
+        />
 
-      {/* All day section */}
-      <View style={Styles.allDayHeaderRow}>
-        <Text style={Styles.sectionHeader}>Aktiviteter hele dagen</Text>
-        <Text style={Styles.allDayPill}>Hele dagen</Text>
+        {/* All day section */}
+        <View style={Styles.allDayHeaderRow}>
+          <Text style={Styles.sectionHeader}>Aktiviteter hele dagen</Text>
+          <Text style={Styles.allDayPill}>Hele dagen</Text>
+        </View>
+        <FlatList
+          data={allDayActivities}
+          keyExtractor={(it) => it.id}
+          renderItem={renderAllDay}
+          contentContainerStyle={{ paddingBottom: 24 }}
+        />
       </View>
-      <FlatList
-        data={allDayActivities}
-        keyExtractor={(it) => it.id}
-        renderItem={renderAllDay}
-        contentContainerStyle={{ paddingBottom: 24 }}
-      />
-    </View>
     </SafeAreaView>
   );
 }

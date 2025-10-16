@@ -9,6 +9,7 @@ import Forum from "../Screens/Forum";
 import ActivityDetails from "../Screens/ActivityDetails";
 import Login from "../Screens/Login";
 import Upload from '../Screens/Uploads';
+import MapScreen from '../Screens/MapScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -68,6 +69,7 @@ export default function Navigator() {
       <Tab.Screen name="Program" component={ProgramStack} options={{ tabBarAccessibilityLabel: "Gå til Program" }} />
       <Tab.Screen name="Forum" component={GalleryStack} options={{ tabBarAccessibilityLabel: "Gå til Galleri" }}/>
       <Tab.Screen name="Personale" component={PersonaleStack} options={{ tabBarAccessibilityLabel: 'Personale login' }} />
+      <Tab.Screen name="Pladsen" component={MapScreen} options={{ tabBarAccessibilityLabel: 'Gå til Pladsen', title: 'Pladsen' }}/>
     </Tab.Navigator>
   );
 }

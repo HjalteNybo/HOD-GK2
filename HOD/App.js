@@ -5,6 +5,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "./Context/Auth";
 import { enableNetwork } from "firebase/firestore";
 import { db } from "./Firebase/FirebaseApp";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 
 // Hovedapplikationskomponenten
 export default function App() {
@@ -14,6 +16,7 @@ export default function App() {
   }, []);
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
       <AuthProvider>
         <NavigationContainer>
@@ -21,5 +24,6 @@ export default function App() {
         </NavigationContainer>
       </AuthProvider>
     </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

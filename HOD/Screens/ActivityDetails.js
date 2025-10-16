@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from "../Styles/ActivityDetailsStyles";
 import { Ionicons } from "@expo/vector-icons";
 
+
+
 export default function ActivityDetails({ route, navigation }) {
   const { activity } = route.params || {};
   const { id, title, timeLabel, type, description } = activity || {};
@@ -43,7 +45,7 @@ export default function ActivityDetails({ route, navigation }) {
 
       <Pressable
         style={({ pressed }) => [Styles.findButton, pressed && Styles.findButtonPressed]}
-        onPress={() => navigation.navigate("Kort", { fromActivityId: id, fromTitle: title, type })}
+        onPress={() => navigation.navigate("Pladsen", { fromActivityId: id, fromTitle: title, type })}
         accessibilityRole="button"
         accessibilityLabel="Find vej på kortet"
       >
