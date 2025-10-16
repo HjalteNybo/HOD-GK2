@@ -13,17 +13,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true,
-      "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Appen skal bruge adgang til dit fotobibliotek for at uploade medier.",
-        "NSPhotoLibraryAddUsageDescription": "Appen skal kunne gemme eller vælge medier."
-      }
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff",
-        "permissions": []
+        "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
     },

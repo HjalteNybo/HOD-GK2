@@ -223,7 +223,7 @@ export default function Home({ navigation }) {
         {/* GALLERI (orange) */}
         <Pressable
           style={({ pressed }) => [Styles.quickButtonOrange, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Forum')} // midlertidigt: Galleri-route
+          onPress={() => navigation.navigate('Galleri')} // midlertidigt: Galleri-route
           accessibilityRole="button"
           accessibilityLabel="Åbn galleri"
         >

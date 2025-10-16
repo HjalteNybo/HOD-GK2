@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";            // ← importér useEffect
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import Navigator from "./Navigation/Navigator";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -8,9 +8,7 @@ import { db } from "./Firebase/FirebaseApp";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 
-// Hovedapplikationskomponenten
 export default function App() {
-  // kør kun én gang ved app-start
   useEffect(() => {
     enableNetwork(db).catch(() => {}); // ignorer hvis allerede enabled
   }, []);

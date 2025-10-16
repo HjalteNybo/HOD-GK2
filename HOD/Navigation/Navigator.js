@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import MediaViewer from '../Screens/MediaViewer'; 
 import Home from "../Screens/Home";
 import Program from "../Screens/Program";
-import Forum from "../Screens/Forum";
+import Galleri from "../Screens/Galleri";
 import ActivityDetails from "../Screens/ActivityDetails";
 import Login from "../Screens/Login";
 import Upload from '../Screens/Uploads';
@@ -26,7 +26,7 @@ function ProgramStack() {
 function GalleryStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="GalleryGrid" component={Forum} />
+      <Stack.Screen name="GalleryGrid" component={Galleri} />
       <Stack.Screen
         name="MediaViewer"
         component={MediaViewer}
@@ -58,7 +58,7 @@ export default function Navigator() {
           let icon = "home";
           if (route.name === "Home") icon = focused ? "home" : "home-outline";
           if (route.name === "Program") icon = focused ? "list" : "list-outline";
-          if (route.name === "Forum") icon = focused ? "chatbubbles" : "chatbubbles-outline";
+          if (route.name === "Galleri") icon = focused ? "chatbubbles" : "chatbubbles-outline";
           return <Ionicons name={icon} size={size} color={color} />;
         },
         tabBarActiveTintColor: "#3558A6",
@@ -67,7 +67,7 @@ export default function Navigator() {
     >
       <Tab.Screen name="Home" component={Home} options={{ tabBarAccessibilityLabel: "Gå til Hjem" }} />
       <Tab.Screen name="Program" component={ProgramStack} options={{ tabBarAccessibilityLabel: "Gå til Program" }} />
-      <Tab.Screen name="Forum" component={GalleryStack} options={{ tabBarAccessibilityLabel: "Gå til Galleri" }}/>
+      <Tab.Screen name="Galleri" component={GalleryStack} options={{ tabBarAccessibilityLabel: "Gå til Galleri" }}/>
       <Tab.Screen name="Personale" component={PersonaleStack} options={{ tabBarAccessibilityLabel: 'Personale login' }} />
       <Tab.Screen name="Pladsen" component={MapScreen} options={{ tabBarAccessibilityLabel: 'Gå til Pladsen', title: 'Pladsen' }}/>
     </Tab.Navigator>
