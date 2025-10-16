@@ -2,7 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-
+import MediaViewer from '../Screens/MediaViewer'; 
 import Home from "../Screens/Home";
 import Program from "../Screens/Program";
 import Forum from "../Screens/Forum";
@@ -18,6 +18,19 @@ function ProgramStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProgramList" component={Program} />
       <Stack.Screen name="ActivityDetails" component={ActivityDetails} />
+    </Stack.Navigator>
+  );
+}
+
+function GalleryStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="GalleryGrid" component={Forum} />
+      <Stack.Screen
+        name="MediaViewer"
+        component={MediaViewer}
+        options={{ headerShown: true, title: 'Visning' }} // back-knap auto
+      />
     </Stack.Navigator>
   );
 }
@@ -53,7 +66,7 @@ export default function Navigator() {
     >
       <Tab.Screen name="Home" component={Home} options={{ tabBarAccessibilityLabel: "Gå til Hjem" }} />
       <Tab.Screen name="Program" component={ProgramStack} options={{ tabBarAccessibilityLabel: "Gå til Program" }} />
-      <Tab.Screen name="Forum" component={Forum} options={{ tabBarAccessibilityLabel: "Gå til Forum" }} />
+      <Tab.Screen name="Forum" component={GalleryStack} options={{ tabBarAccessibilityLabel: "Gå til Galleri" }}/>
       <Tab.Screen name="Personale" component={PersonaleStack} options={{ tabBarAccessibilityLabel: 'Personale login' }} />
     </Tab.Navigator>
   );

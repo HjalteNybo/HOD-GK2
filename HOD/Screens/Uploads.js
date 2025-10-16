@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { storage, db } from '../Firebase/FirebaseApp';
+import { auth, storage, db } from '../Firebase/FirebaseApp';
 import { useAuth } from '../Context/Auth';
 
 export default function Upload({ navigation }) {
@@ -22,11 +22,13 @@ export default function Upload({ navigation }) {
   }
 
   const pickAndUpload = async () => {
+    console.log('[upload] currentUser', auth.currentUser?.uid);
     setMsg('');
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      quality: 0.8,
-    });
+        mediaTypes: ImagePicker.MediaType.all, 
+        quality: 0.8,
+        selectionLimit: 1,
+});
     if (res.canceled) return;
 
     const asset = res.assets[0];
@@ -45,6 +47,8 @@ export default function Upload({ navigation }) {
       const resp = await fetch(fileUri);
       const blob = await resp.blob();
 
+      console.log('[upload] uid', user?.uid);
+    console.log('[upload] path', path);
       const storageRef = ref(storage, path);
       const task = uploadBytesResumable(storageRef, blob);
 
