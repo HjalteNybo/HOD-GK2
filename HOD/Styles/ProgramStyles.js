@@ -1,11 +1,11 @@
 import { StyleSheet } from "react-native";
 
 const Colors = {
-  background: "#F5E8C8", // sand/beige
+  background: "#F5E8C8",
   surface: "#FFFFFF",
-  primary: "#3E6B39",    // mørk skovgrøn
-  secondary: "#F28C38",  // varm orange
-  accent: "#F6C65B",     // gul (badges)
+  primary: "#3E6B39",    
+  secondary: "#F28C38",  
+  accent: "#F6C65B",     
   text: "#1E1E1E",
   mutedText: "#5C7E8C",
   alert: "#C23B22",
@@ -38,8 +38,6 @@ export default StyleSheet.create({
     color: Colors.primary,
     marginVertical: 6,
   },
-
-  /* Scheduled cards */
   card: {
     backgroundColor: Colors.surface,
     borderRadius: 16,

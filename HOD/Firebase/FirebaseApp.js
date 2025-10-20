@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+// Firebase projektkonfiguration
 const firebaseConfig = {
   apiKey: 'AIzaSyD1fBV0n2dPeesaCOESsBufgZNtK0zZH9o',
   authDomain: 'hod-festival-93df0.firebaseapp.com',
@@ -15,10 +16,8 @@ const firebaseConfig = {
 
 let app;
 try {
-  // Brug eksisterende hvis den findes
   app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 } catch (e) {
-  // Fald tilbage hvis nogen anden init’er samtidig
   if (e?.code === 'app/duplicate-app') {
     app = getApp();
   } else {
@@ -26,29 +25,28 @@ try {
   }
 }
 
-// Debug: vis hvilken config der faktisk er aktiv nu
+// Debug: vis hvilken config der faktisk er aktiv nu. bliver slettet men lige nu beholder vi den hviiiis nu der skulle ske noget mærkeligt
 if (__DEV__) {
   console.log('[cfg] sdk =', FB_SDK_VERSION);
   console.log('[cfg] projectId(active) =', app.options.projectId);
   console.log('[cfg] storageBucket(active) =', app.options.storageBucket);
-  // Advar hvis eksisterende app i memory ikke matcher denne fils config
+
   if (app.options.storageBucket !== firebaseConfig.storageBucket) {
     console.warn('[cfg] WARNING: existing app has storageBucket =', app.options.storageBucket,
       'but this file expects =', firebaseConfig.storageBucket,
       '→ Find anden initializeApp, der kører først.');
   }
 }
-
-// Auth (RN persistence)
+// Initialiserer Firebase Auth med AsyncStorage-persistens
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
 
-// Firestore (RN-friendly transport)
+// Initialiserer Firestore med RN-venlige netværksflags
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
   useFetchStreams: false,
 });
 
-// Storage – brug korrekt gs:// bucket eksplicit
+// Initialiserer Firebase Storage-klienten og peger eksplicit på bucket'en
 export const storage = getStorage(app, 'gs://hod-festival-93df0.firebasestorage.app');

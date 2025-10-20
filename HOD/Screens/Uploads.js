@@ -13,6 +13,7 @@ export default function Upload({ navigation }) {
   const [progress, setProgress] = useState(0);
   const [msg, setMsg] = useState('');
 
+  //viser besked hvis man ikke er personale
   if (!user || !isStaff) {
     return (
       <SafeAreaView style={{ flex:1, justifyContent:'center', alignItems:'center', padding:16 }}>
@@ -20,12 +21,12 @@ export default function Upload({ navigation }) {
       </SafeAreaView>
     );
   }
-
+// Åbner billed-/videovælger, uploader til Firebase Storage via REST og gemmer metadata i Firestore
   const pickAndUpload = async () => {
     setMsg('');
     console.log('[UPLOAD-DIAG] === START UPLOAD (REST) ===');
     try {
-      // --- 1) Permissions ---
+      // bed om adgang til fotobibliotek
       const existing = await ImagePicker.getMediaLibraryPermissionsAsync();
       console.log('[UPLOAD-DIAG] perm existing:', existing);
       let granted = existing?.granted === true;
@@ -42,28 +43,28 @@ export default function Upload({ navigation }) {
         return;
       }
 
-      // --- 2) Vælg medie (brug ny API hvis muligt) ---
+      //Vælg medie: brug ny API hvis tilgængelig, ellers fallback
       let mediaTypes;
       if (ImagePicker?.MediaType) {
-        // ny API
         const img = ImagePicker.MediaType.images ?? ImagePicker.MediaType.image;
         const vid = ImagePicker.MediaType.videos ?? ImagePicker.MediaType.video;
         mediaTypes = [img, vid];
         console.log('[UPLOAD-DIAG] using NEW MediaType API:', mediaTypes);
       } else {
-        // fallback (kan give warning, men fungerer)
+        // fallback 
         mediaTypes = ImagePicker.MediaTypeOptions.All;
         console.log('[UPLOAD-DIAG] using OLD MediaTypeOptions API: All');
       }
 
       console.log('[UPLOAD-DIAG] opening picker…');
+      // Åbn galleri og vælg asset
       const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes, quality: 0.85 });
       if (!res || res.canceled || !res.assets?.length) {
         setMsg('Ingen fil valgt.');
         console.log('[UPLOAD-DIAG] picker canceled/empty');
         return;
       }
-
+      //Første valgte asset (billede eller video)
       const asset = res.assets[0];
       console.log('[UPLOAD-DIAG] asset:', {
         uri: asset.uri,
@@ -86,6 +87,7 @@ export default function Upload({ navigation }) {
       else if (mime.includes('mp4')) ext = 'mp4';
       else if (mime.includes('quicktime') || mime.includes('mov')) ext = 'mov';
 
+       // Byg sti: år/uid/random-id
       const year = new Date().getFullYear();
       const uid  = user.uid;
       const id   = Math.random().toString(36).slice(2, 10);
@@ -94,10 +96,11 @@ export default function Upload({ navigation }) {
       console.log('[UPLOAD-DIAG] asset size from picker:', asset.fileSize);
       console.log('[UPLOAD-DIAG] computed path:', path, 'mime=', mime);
 
-      // --- 4) Forbered REST-upload ---
+      //forbered REST-upload til Firebase Storage
       const bucket = 'hod-festival-93df0.firebasestorage.app';
       const url = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?name=${encodeURIComponent(path)}`;
 
+      // Sikrer at vi har en logget ind bruger
       const currentUser = auth.currentUser;
       if (!currentUser) {
         setMsg('Ingen bruger er logget ind.');
@@ -105,9 +108,11 @@ export default function Upload({ navigation }) {
         return;
       }
 
+      //sæt upload-flag til UI og start fra 1%
       setUploading(true);
       setProgress(1);
 
+      //hent Firebase ID Token til Authorization-headeren
       const token = await currentUser.getIdToken();
       console.log('[UPLOAD-DIAG] got idToken len=', token?.length);
 
@@ -115,7 +120,6 @@ export default function Upload({ navigation }) {
         httpMethod: 'POST',
         headers: {
           'Content-Type': mime,
-          // VIGTIGT: Firebase Storage REST accepterer ID Token i dette format
           'Authorization': `Firebase ${token}`,
         },
         uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
@@ -140,7 +144,7 @@ export default function Upload({ navigation }) {
           } catch {}
         }
       );
-
+      //Kør uploaden og vent på svar
       const up = await task.uploadAsync();
       console.log('[UPLOAD-DIAG] REST status=', up.status);
 
@@ -157,13 +161,12 @@ export default function Upload({ navigation }) {
       if (meta.downloadTokens) {
         downloadURL = `https://firebasestorage.googleapis.com/v0/b/${meta.bucket}/o/${encodeURIComponent(meta.name)}?alt=media&token=${meta.downloadTokens}`;
       } else {
-        // fallback – kræver at filen må læses (ellers hent via SDK senere)
         downloadURL = `https://firebasestorage.googleapis.com/v0/b/${meta.bucket}/o/${encodeURIComponent(meta.name)}?alt=media`;
       }
 
       setProgress(90);
 
-      // --- 6) Gem metadata i Firestore ---
+      //gem metadata i Firestore
       await addDoc(collection(db, 'media'), {
         downloadURL,
         type: isImage ? 'image' : 'video',
@@ -176,7 +179,7 @@ export default function Upload({ navigation }) {
       });
 
       setProgress(100);
-      setMsg('Upload gennemført ✔');
+      setMsg('Upload gennemført');
       console.log('[UPLOAD-DIAG] DONE. downloadURL=', downloadURL);
     } catch (e) {
       console.log('[UPLOAD-DIAG] ERROR:', e?.message || e);
@@ -186,6 +189,7 @@ export default function Upload({ navigation }) {
     }
   };
 
+  //upload-knap, loader/progress og tilbage-knap
   return (
     <SafeAreaView style={{ flex:1, padding:16 }}>
       <Text style={{ fontSize:22, fontWeight:'800', marginBottom:12 }}>Upload filer</Text>

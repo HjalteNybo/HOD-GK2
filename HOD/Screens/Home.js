@@ -3,12 +3,10 @@ import { View, Text, AccessibilityInfo, Pressable, Linking } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from '../Styles/HomeStyles';
 
-/* ============ Helpers & data ============ */
-
-// Find "sidste torsdag i august" for et givent år
+//finder datoen for “sidste torsdag i august” i et givent år
 function getFestivalDate(year) {
-  const augustFirst = new Date(year, 7, 1); // 0=jan → 7=aug
-  const day = augustFirst.getDay(); // 0=søn ... 4=tors
+  const augustFirst = new Date(year, 7, 1); 
+  const day = augustFirst.getDay(); 
   const offsetToThursday = (4 - day + 7) % 7;
   const firstThursday = new Date(augustFirst);
   firstThursday.setDate(augustFirst.getDate() + offsetToThursday);
@@ -20,16 +18,18 @@ function getFestivalDate(year) {
     : new Date(firstThursday.setDate(firstThursday.getDate() + 21));
 }
 
-// Format "HH:MM" → Date på festivaldatoen
+//returnerer en Date på samme kalenderdag som `date`, men med klokkeslæt HH:MM
 function timeOnDate(date, hhmm) {
   const [h, m] = hhmm.split(':').map(Number);
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m, 0);
 }
 
+//padder et tal til to cifre (fx 7 → "07")
 function pad2(x) { return String(x).padStart(2, '0'); }
+// Formatterer en Date som "HH:MM"
 function fmtHM(dt) { return `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`; }
 
-// Returnér { isBeforeDay, isFestivalDay, isAfterDay }
+// Returnerer om vi er før dagen, på dagen (mellem åbne/luk) eller efter dagen
 function getDayState(now, festStart, festEnd) {
   const ymd = (d) => [d.getFullYear(), d.getMonth(), d.getDate()].join('-');
   const todayKey = ymd(now), festKey = ymd(festStart);
@@ -41,7 +41,7 @@ function getDayState(now, festStart, festEnd) {
   };
 }
 
-/* ===== Program (bruges til “Næste aktivitet”) ===== */
+//det fastlagte dagsprogram med start/slut tider på festivaldatoen
 function buildProgram(festivalDate) {
   const S = (t) => timeOnDate(festivalDate, t);
   return [
@@ -55,7 +55,7 @@ function buildProgram(festivalDate) {
   ];
 }
 
-// Ændringer (vises kun hvis der er noget)
+// liste over vigtige ændringer (vises kun hvis der er noget)
 const CHANGES = [
   'Ændring: Brandbilen er blevet sendt ud til en brand, så den kommer desværre ikke i dag.'
 ];
@@ -75,14 +75,14 @@ export default function Home({ navigation }) {
     return (thisYear > today) ? thisYear : getFestivalDate(today.getFullYear() + 1);
   }, []);
 
-  // Åbning/luk (kan justeres)
+  // Åbning/luk tider
   const festivalOpen = useMemo(() => timeOnDate(festivalDate, '10:00'), [festivalDate]);
   const festivalClose = useMemo(() => timeOnDate(festivalDate, '14:00'), [festivalDate]);
 
-  // Program med konkrete datoer
+  //program med konkrete datoer
   const program = useMemo(() => buildProgram(festivalDate), [festivalDate]);
 
-  // Nedtælling
+  //udregner tid der er tilbage til åbningstid (bruges af nedtællingen)
   const getTimeLeft = () => {
     const now = new Date();
     const diff = festivalOpen.getTime() - now.getTime();
@@ -97,6 +97,7 @@ export default function Home({ navigation }) {
   const [timeLeft, setTimeLeft] = useState(getTimeLeft());
   const [now, setNow] = useState(new Date());
 
+  // Ticker der opdaterer nedtælling og “nu” hvert sekund
   useEffect(() => {
     const id = setInterval(() => {
       setTimeLeft(getTimeLeft());
@@ -109,9 +110,10 @@ export default function Home({ navigation }) {
     AccessibilityInfo.announceForAccessibility?.('Nedtælling til Håb & Drømme Festivalen.');
   }, []);
 
+  //tjekker om vi er før/under/efter festivaldagen ud fra nuværende tid
   const { isBeforeDay, isFestivalDay } = getDayState(now, festivalOpen, festivalClose);
 
-  // Find "nu" eller "næste" aktivitet
+  //finder igangværende aktivitet eller næste aktivitet i dag
   let nowOrNext = null;
   if (isFestivalDay) {
     const current = program.find(a => now >= a.start && now < a.end);
@@ -122,26 +124,24 @@ export default function Home({ navigation }) {
       if (upcoming) nowOrNext = { mode: 'next', item: upcoming };
     }
   }
-
+  //læsevenlig dato-tekst
   const niceDate = festivalDate.toLocaleDateString('da-DK', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   });
 
+  //header, nedtælling/“i dag”, ændringer, beskrivelse, genveje og kontakt
   return (
     <SafeAreaView style={Styles.container} edges={['top']}>
     <View style={Styles.container} accessible accessibilityLabel="Hjemmeskærm med nedtælling og festivalbeskrivelse">
-      {/* Titel */}
       <View style={Styles.header}>
         <Text style={Styles.title}>Håb & Drømme Festival</Text>
         <View style={Styles.accentBar} />
       </View>
 
-      {/* Dato */}
       <Text style={Styles.dateText}>
         Sidste torsdag i august — {niceDate}
       </Text>
 
-      {/* Nedtælling (før dagen) */}
       {isBeforeDay && (
         <>
           <Text style={Styles.countdownIntro}>Vi ses om</Text>
@@ -168,7 +168,6 @@ export default function Home({ navigation }) {
         </>
       )}
 
-      {/* I dag på festivalen */}
       {isFestivalDay && (
         <View style={Styles.todayCard}>
           <Text style={Styles.todayHeader}>
@@ -192,7 +191,6 @@ export default function Home({ navigation }) {
         </View>
       )}
 
-      {/* Ændringer / driftsbeskeder */}
       {CHANGES.length > 0 && (
         <View style={Styles.alertCard} accessibilityLabel="Vigtige ændringer">
           {CHANGES.map((msg, i) => (
@@ -201,16 +199,13 @@ export default function Home({ navigation }) {
         </View>
       )}
 
-      {/* Beskrivelse */}
       <Text style={Styles.descriptionTitle}>Hvad er Håb & Drømme Festivalen?</Text>
       <Text style={Styles.description}>
         En tryg éndagsfestival med ro, nærvær og aktiviteter for alle.
         På dagen finder du bl.a. sanselige aktiviteter, kreative værksteder og rolige zoner.
       </Text>
 
-      {/* Hurtige genveje */}
       <View style={Styles.quickRow} accessible accessibilityRole="menu">
-        {/* PROGRAM */}
         <Pressable
           style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
           onPress={() => navigation.navigate('Program')}
@@ -220,10 +215,9 @@ export default function Home({ navigation }) {
         <Text style={Styles.quickButtonText}>Program</Text>
         </Pressable>
 
-        {/* GALLERI (orange) */}
         <Pressable
           style={({ pressed }) => [Styles.quickButtonOrange, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Galleri')} // midlertidigt: Galleri-route
+          onPress={() => navigation.navigate('Galleri')} 
           accessibilityRole="button"
           accessibilityLabel="Åbn galleri"
         >
@@ -240,7 +234,6 @@ export default function Home({ navigation }) {
         </Pressable>
       </View>
 
-      {/* Kontakt & hjælp */}
       <View style={Styles.contactSection}>
         <Text style={Styles.descriptionTitle}>Har du brug for hjælp?</Text>
         {CONTACTS.map((c, i) => (

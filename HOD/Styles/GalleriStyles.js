@@ -19,8 +19,6 @@ export default StyleSheet.create({
   errorText: {
     color: '#C23B22',
   },
-
-  // Lidt luft i toppen + bund
   gridContent: {
     paddingTop: 12,
     paddingBottom: 24,

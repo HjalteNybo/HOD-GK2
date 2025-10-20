@@ -79,7 +79,7 @@ export default StyleSheet.create({
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#3E6B39', // primary grøn
+    backgroundColor: '#3E6B39',
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 14,

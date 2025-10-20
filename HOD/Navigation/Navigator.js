@@ -11,9 +11,11 @@ import Login from "../Screens/Login";
 import Upload from '../Screens/Uploads';
 import MapScreen from '../Screens/MapScreen';
 
+// Opretter navigator-instanser
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+// Stack til Program-fanen (liste -> detaljer)
 function ProgramStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -23,6 +25,7 @@ function ProgramStack() {
   );
 }
 
+// Stack til Galleri-fanen (grid -> fuld visning)
 function GalleryStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -30,12 +33,12 @@ function GalleryStack() {
       <Stack.Screen
         name="MediaViewer"
         component={MediaViewer}
-        options={{ headerShown: true, title: 'Visning' }} // back-knap auto
+        options={{ headerShown: true, title: 'Visning' }} 
       />
     </Stack.Navigator>
   );
 }
-
+// Stack til Personale (login -> upload)
 function PersonaleStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -46,12 +49,12 @@ function PersonaleStack() {
   );
 }
 
+// Hovednavigator med bundfaner
 export default function Navigator() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={({ route }) => ({
-        // VALGFRIT: lad Stack styre headers
         headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarLabelStyle: { fontSize: 12 },

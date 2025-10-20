@@ -5,13 +5,16 @@ import { auth, db } from '../Firebase/FirebaseApp';
 
 const AuthCtx = createContext(null);
 
+//holder styr på auth-state og udstiller login/logout
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+    // isStaff: flag der angiver om brugeren findes i 'staff' collection
   const [isStaff, setIsStaff] = useState(false);
   const [loading, setLoading] = useState(true);
   const [opLoading, setOpLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  //lytter på auth-state og henter staff-rolle ved login
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u || null);
@@ -20,7 +23,6 @@ export function AuthProvider({ children }) {
       if (!u) { setLoading(false); return; }
 
       try {
-        // Læs staff/{uid} direkte fra serveren (ingen streaming/cache)
         const snap = await getDocFromServer(doc(db, 'staff', u.uid));
         setIsStaff(snap.exists());
       } catch (err) {
@@ -33,6 +35,7 @@ export function AuthProvider({ children }) {
     return () => unsub();
   }, []);
 
+  //logger ind med email/password
   const login = async (email, password) => {
     setOpLoading(true); setError(null);
     try {
@@ -44,7 +47,7 @@ export function AuthProvider({ children }) {
       setOpLoading(false);
     }
   };
-
+    //logger ud
   const logout = async () => {
     setOpLoading(true);
     try { await signOut(auth); }
@@ -56,9 +59,10 @@ export function AuthProvider({ children }) {
     [user, isStaff, loading, opLoading, error]
   );
 
+    // Udleverer auth-værdier til resten af appen via context provider
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
-
+//henter auth-context og sikrer at den bruges indenfor provider
 export function useAuth() {
   const ctx = useContext(AuthCtx);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');

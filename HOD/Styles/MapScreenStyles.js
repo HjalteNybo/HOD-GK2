@@ -38,7 +38,6 @@ export default StyleSheet.create({
     resizeMode: "cover",
   },
 
-  /** TOP-BOKS */
   topBar: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.lg * 2.2,
@@ -62,33 +61,28 @@ export default StyleSheet.create({
     color: colors.mutedText ?? "#5C7E8C",
   },
 
-  /** HOTSPOTS */
   hallButton: {
     position: "absolute",
     alignItems: "center",
     justifyContent: "center",
   },
 
-  // Ydre grøn ring
   hallOuterRing: {
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 3,
-    borderColor: colors.primary, // grøn kant
+    borderColor: colors.primary,
     borderRadius: 999,
     backgroundColor: colors.surface,
     ...shadowLite,
   },
 
-  // Ikoncontainer
   hallIconWrap: {
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surface,
     overflow: "hidden",
   },
-
-  /** LEGEND */
   legendBelowCard: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
@@ -112,7 +106,7 @@ export default StyleSheet.create({
     marginTop: 10,
   },
   legendRowIcon: {
-    width: 32, // større ikoner
+    width: 32,
     height: 32,
     borderRadius: 16,
     borderWidth: 3,
