@@ -43,7 +43,7 @@ export default function Upload({ navigation }) {
         return;
       }
 
-      //Vælg medie: brug ny API hvis tilgængelig, ellers fallback
+      // brug ny API hvis tilgængelig, ellers fallback
       let mediaTypes;
       if (ImagePicker?.MediaType) {
         const img = ImagePicker.MediaType.images ?? ImagePicker.MediaType.image;
@@ -75,7 +75,7 @@ export default function Upload({ navigation }) {
         fileSize: asset.fileSize,
       });
 
-      // --- 3) Metadata / sti ---
+      // Metadata / sti 
       const isImage = asset.type === 'image';
       const fileUri = asset.uri;
       const mime = asset.mimeType || (isImage ? 'image/jpeg' : 'video/mp4');
@@ -153,7 +153,7 @@ export default function Upload({ navigation }) {
         throw new Error(`REST upload fejlede (status ${up.status})`);
       }
 
-      // --- 5) Parse svar & lav downloadURL ---
+      // Parse svar & lav downloadURL
       const meta = JSON.parse(up.body);
       console.log('[UPLOAD-DIAG] REST meta keys=', Object.keys(meta));
 
