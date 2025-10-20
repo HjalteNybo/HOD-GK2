@@ -1,25 +1,17 @@
 import React, { useMemo } from "react";
-import {
-  View,
-  ImageBackground,
-  Pressable,
-  Text,
-  useWindowDimensions,
-  Alert,
-  Image,
-} from "react-native";
+import { View, ImageBackground, Pressable, Text, useWindowDimensions, Alert, Image, } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../Styles/MapScreenStyles";
 import { colors } from "../Styles/GlobalStyles";
 
-/* midlertidige ikoner */
+// Midlertidige ikoner – udskiftes med rigtige senere
 const ICON_SCENE = require("../assets/adaptive-icon.png");
 const ICON_SANSE = require("../assets/adaptive-icon.png");
 const ICON_TELT  = require("../assets/adaptive-icon.png");
 const ICON_HOVED = require("../assets/adaptive-icon.png");
 const ICON_FAE   = require("../assets/adaptive-icon.png");
 
-/* helper-funktioner */
+// Finder festivaldatoen ved at beregne den fjerde torsdag i august for et givent år
 function getFestivalDate(year) {
   const augustFirst = new Date(year, 7, 1);
   const day = augustFirst.getDay();
@@ -50,7 +42,7 @@ function buildScheduled(festivalDate) {
     { id: "a7", title: "Karaoke", start: S("13:00"), end: S("14:00"), place: "Telt A" },
   ];
 }
-
+// Kortlægningsobjekt der definerer position, radius, label og ikon for hvert område på festivalpladsen
 const PLACE_MAP = {
   Hovedområde:   { xPct: 50, yPct: 18, r: 22, label: "Hovedområde",   icon: ICON_HOVED },
   Scene:         { xPct: 62, yPct: 28, r: 22, label: "Scene",         icon: ICON_SCENE },
@@ -59,6 +51,7 @@ const PLACE_MAP = {
   Fællesområde:  { xPct: 55, yPct: 70, r: 22, label: "Fællesområde",  icon: ICON_FAE },
 };
 
+// Funktion der bestemmer det korrekte program-tab-navn baseret på navigation state
 function resolveProgramTabName(navigation) {
   try {
     const state = navigation.getState?.();
@@ -69,6 +62,7 @@ function resolveProgramTabName(navigation) {
   return "Program";
 }
 
+// Hovedkomponent for kortskærmen med interaktive hotspots
 export default function MapScreen() {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
@@ -81,11 +75,13 @@ export default function MapScreen() {
     return thisYear > now ? thisYear : getFestivalDate(now.getFullYear() + 1);
   }, [now]);
 
+  // Opbygger den sorterede liste af planlagte aktiviteter for festivaldagen
   const scheduled = useMemo(
     () => buildScheduled(festivalDate).slice().sort((a, b) => a.start - b.start),
     [festivalDate]
   );
 
+  // Genererer hotspot-data med positioner og ikoner baseret på PLACE_MAP
   const hotspots = useMemo(() => {
     return Object.entries(PLACE_MAP).map(([place, cfg]) => {
       const { xPct, yPct, r, label, icon } = cfg;
@@ -95,6 +91,7 @@ export default function MapScreen() {
     });
   }, [width, height]);
 
+  // Håndterer tryk på et hotspot ved at finde og åbne den næste aktivitet på det sted
   function openNextActivityAt(place) {
     const atPlace = scheduled.filter((a) => a.place === place);
     if (atPlace.length === 0) {
@@ -117,6 +114,7 @@ export default function MapScreen() {
     });
   }
 
+  // Renderer kortskærmen med baggrundsbillede og interaktive hotspots
   return (
     <View style={styles.container}>
       <View style={styles.mapWrapper}>

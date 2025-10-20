@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from "../Styles/ProgramStyles";
 import { useRoute } from "@react-navigation/native";
 
-/* ===== Helpers ===== */
+// Funktion der beregner festivaldatoen som falder 4 uger efter første torsdag i august
 function getFestivalDate(year) {
   const augustFirst = new Date(year, 7, 1);
   const day = augustFirst.getDay(); // 0=søn ... 4=tors
@@ -18,6 +18,7 @@ function getFestivalDate(year) {
     : new Date(firstThursday.setDate(firstThursday.getDate() + 21));
 }
 
+// Funktion der returnerer et nyt Date-objekt med angivet klokkeslæt på en given dato
 function timeOnDate(date, hhmm) {
   const [h, m] = hhmm.split(":").map(Number);
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m, 0);
@@ -25,6 +26,7 @@ function timeOnDate(date, hhmm) {
 const pad2 = (x) => String(x).padStart(2, "0");
 const fmtHM = (dt) => `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
 
+// Funktion der tjekker om to datoer ligger på samme kalenderdag
 function isSameCalendarDay(a, b) {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -33,7 +35,7 @@ function isSameCalendarDay(a, b) {
   );
 }
 
-/* ===== Data builders (dine aktiviteter) ===== */
+// Funktion der opretter en tidsplan med aktiviteter for festivaldagen
 function buildScheduled(festivalDate) {
   const S = (t) => timeOnDate(festivalDate, t);
   return [
@@ -46,7 +48,7 @@ function buildScheduled(festivalDate) {
     { id: "a7", title: "Karaoke", start: S("13:00"), end: S("14:00"), place: "Telt A" },
   ];
 }
-
+// Data for aktiviteter der varer hele dagen
 const allDayActivities = [
   { id: "d1", title: "3-kamp", type: "allDay", description: "Deltag i hyggelig 3-kamp hele dagen." },
   { id: "d2", title: "Klap et dyr (hund, kanin, hest)", type: "allDay", description: "Rolig dyrestund med frivillige." },
@@ -55,7 +57,7 @@ const allDayActivities = [
   { id: "d5", title: "Lav mad i køkkenet", type: "allDay", description: "Små madaktiviteter for alle." },
   { id: "d6", title: "Håb & Drømme-bod", type: "allDay", description: "Skriv dine håb og drømme – vi hænger dem op." },
 ];
-
+//
 export default function Program({ navigation }) {
   const now = new Date();
   const route = useRoute();
@@ -78,8 +80,8 @@ export default function Program({ navigation }) {
 
   // Filtrering efter valgt bod/event fra kortet 
   const filteredItems = useMemo(() => {
-    if (!boothId) return items; // vis alt hvis ikke fra kortet
-    // match på place-feltet (fx "Scene", "Telt A", "Fællesområde", osv.)
+    if (!boothId) return items;
+    // match på place-feltet 
     return items.filter(
       (it) =>
         it.place?.toLowerCase() === boothId.toLowerCase() ||
@@ -87,8 +89,8 @@ export default function Program({ navigation }) {
     );
   }, [boothId, items]);
 
+// Bestemmer om det er festivaldag, finder næste aktivitet og formaterer dato til læsevenlig tekst
   const isFestivalDay = isSameCalendarDay(now, open);
-  // find første kommende for “NÆSTE” badge
   const firstUpcoming = isFestivalDay ? items.find((a) => now < a.start) : null;
   const firstUpcomingId = firstUpcoming?.id;
 
@@ -99,6 +101,7 @@ export default function Program({ navigation }) {
     year: "numeric",
   });
 
+  // Funktion der renderer hver planlagt aktivitet som et trykbart kort med tid, titel og sted
   const renderScheduled = ({ item }) => {
     const isNow = isFestivalDay && now >= item.start && now < item.end;
     const isNext = isFestivalDay && item.id === firstUpcomingId;
@@ -132,6 +135,7 @@ export default function Program({ navigation }) {
     );
   };
 
+  // Funktion der renderer aktiviteter, som varer hele dagen, som trykbare kort med titel og label
   const renderAllDay = ({ item }) => (
     <Pressable
       onPress={() =>
@@ -157,6 +161,7 @@ export default function Program({ navigation }) {
     </Pressable>
   );
 
+  // Returnerer hovedlayoutet for programskærmen med overskrift, tidsplan og heldagsaktiviteter
   return (
     <SafeAreaView style={Styles.container} edges={['top', 'left', 'right']}>
       <View style={Styles.container}>

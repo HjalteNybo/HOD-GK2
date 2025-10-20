@@ -6,10 +6,11 @@ import { db } from '../Firebase/FirebaseApp';
 import s from '../Styles/GalleriStyles';
 
 const COLS = 3;
-const GAP = 6; // mellemrum
+const GAP = 6; 
 
+// Komponent der viser et galleri af billeder og videoer hentet fra Firestore
 export default function Galleri({ navigation }) {
-  const [items, setItems] = useState(null);   // null = loading
+  const [items, setItems] = useState(null);   
   const [error, setError] = useState(null);
 
   // Breddeberegning: vi har (COLS - 1) mellemrum imellem + 2 * padding ved kanter
@@ -20,6 +21,7 @@ export default function Galleri({ navigation }) {
     return Math.floor((w - pad) / COLS);
   }, []);
 
+  // Henter galleri-items fra Firestore ved komponent-mount
   useEffect(() => {
     const q = query(
       collection(db, 'media'),
@@ -55,6 +57,7 @@ export default function Galleri({ navigation }) {
     return () => unsub();
   }, []);
 
+  // Håndterer forskellige tilstande: loading, fejl, tomt galleri
   if (items === null) {
     return (
       <SafeAreaView style={s.container} edges={['top', 'left', 'right']}>
@@ -111,6 +114,7 @@ export default function Galleri({ navigation }) {
     </Pressable>
   );
 
+  // Returnerer hovedlayoutet med et grid af galleri-items
   return (
     <SafeAreaView style={s.container} edges={['top', 'left', 'right']}>
       <FlatList

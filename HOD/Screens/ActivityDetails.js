@@ -4,8 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from "../Styles/ActivityDetailsStyles";
 import { Ionicons } from "@expo/vector-icons";
 
-
-
+// Komponent til at vise detaljer for en enkelt aktivitet
 export default function ActivityDetails({ route, navigation }) {
   const { activity } = route.params || {};
   const { id, title, timeLabel, type, description } = activity || {};

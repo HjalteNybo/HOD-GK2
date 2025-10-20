@@ -2,7 +2,9 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef, useState, useEffe
 import { View, Text, FlatList, Image, Dimensions, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import styles from "../Styles/MedieViewerStyles";
 
+// Komponent der viser et slide med enten billede eller video og styrer afspilning efter aktiv status
 function Slide({ item, isActive, width, height }) {
   const isVideo = item?.type === 'video';
   const player = useVideoPlayer(isVideo ? item.downloadURL : null, (p) => {
@@ -38,6 +40,7 @@ function Slide({ item, isActive, width, height }) {
   );
 }
 
+// Komponent der viser et swipebart galleri for billeder/videoer, holder styr på aktivt slide/startindeks, opdaterer header-titel og viser caption/meta i footer
 export default function MediaViewer({ route, navigation }) {
   const insets = useSafeAreaInsets();
 
@@ -136,35 +139,3 @@ export default function MediaViewer({ route, navigation }) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#000' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-
-  swiperArea: { flex: 1, backgroundColor: '#000' },
-
-  // VIGTIGT: ingen fast height – lad den arve højden fra swiperArea
-  slide: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#000' },
-
-  // Mediet fylder hele sliden; 'contain' centrerer indholdet symmetrisk
-  media: { width: '100%', height: '100%' },
-
-  footer: {
-    paddingTop: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#000',
-  },
-  caption: {
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 6,
-    opacity: 0.98,
-    fontSize: 16,
-  },
-  meta: {
-    color: '#cbd5e1',
-    textAlign: 'center',
-    fontSize: 12,
-    opacity: 0.9,
-  },
-});

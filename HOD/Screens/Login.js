@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { useAuth } from '../Context/Auth';
 
+// Komponent der håndterer personale-login, visning af brugerinfo og logout
 export default function Login({ navigation }) {
   const { login, logout, user, isStaff, opLoading, error, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Valgfrit: vis en lille loader mens Auth tjekker rolle
+// Viser en loading-indikator mens autentificeringsstatus hentes
   if (loading) {
     return (
       <View style={{ flex:1, alignItems:'center', justifyContent:'center' }}>
@@ -16,6 +17,7 @@ export default function Login({ navigation }) {
     );
   }
 
+  // Viser brugerinfo og logout-knap hvis brugeren er logget ind
   if (user) {
     return (
       <View style={{ flex:1, padding:16, gap:12, justifyContent:'center' }}>
@@ -51,6 +53,7 @@ export default function Login({ navigation }) {
     );
   }
 
+  // Viser login-formular hvis brugeren ikke er logget ind
   return (
     <View style={{ flex:1, padding:16, gap:12, justifyContent:'center' }}>
       <Text style={{ fontSize:22, fontWeight:'800' }}>Personale login</Text>
