@@ -1,19 +1,19 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { View, Text, FlatList, Pressable } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from "react-native-safe-area-context";
 import Styles from "../Styles/ProgramStyles";
 import { useRoute } from "@react-navigation/native";
 
-// Funktion der beregner festivaldatoen som falder 4 uger efter første torsdag i august
+// Festivaldato = 4 uger efter første torsdag i august
 function getFestivalDate(year) {
   const augustFirst = new Date(year, 7, 1);
-  const day = augustFirst.getDay(); // 0=søn ... 4=tors
+  const day = augustFirst.getDay(); 
   const offsetToThursday = (4 - day + 7) % 7;
   const firstThursday = new Date(augustFirst);
   firstThursday.setDate(augustFirst.getDate() + offsetToThursday);
   const potential = new Date(firstThursday);
   potential.setDate(firstThursday.getDate() + 28);
-  return (potential.getMonth() === 7)
+  return potential.getMonth() === 7
     ? potential
     : new Date(firstThursday.setDate(firstThursday.getDate() + 21));
 }
@@ -26,7 +26,7 @@ function timeOnDate(date, hhmm) {
 const pad2 = (x) => String(x).padStart(2, "0");
 const fmtHM = (dt) => `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
 
-// Funktion der tjekker om to datoer ligger på samme kalenderdag
+// Tjekker om to datoer er på samme kalenderdag
 function isSameCalendarDay(a, b) {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -35,7 +35,7 @@ function isSameCalendarDay(a, b) {
   );
 }
 
-// Funktion der opretter en tidsplan med aktiviteter for festivaldagen
+//tidsplan for HOD (taget som eksempel, kan ændres senere)
 function buildScheduled(festivalDate) {
   const S = (t) => timeOnDate(festivalDate, t);
   return [
@@ -48,7 +48,7 @@ function buildScheduled(festivalDate) {
     { id: "a7", title: "Karaoke", start: S("13:00"), end: S("14:00"), place: "Telt A" },
   ];
 }
-// Data for aktiviteter der varer hele dagen
+//Aktiviteter for HOD
 const allDayActivities = [
   { id: "d1", title: "3-kamp", type: "allDay", description: "Deltag i hyggelig 3-kamp hele dagen." },
   { id: "d2", title: "Klap et dyr (hund, kanin, hest)", type: "allDay", description: "Rolig dyrestund med frivillige." },
@@ -57,12 +57,14 @@ const allDayActivities = [
   { id: "d5", title: "Lav mad i køkkenet", type: "allDay", description: "Små madaktiviteter for alle." },
   { id: "d6", title: "Håb & Drømme-bod", type: "allDay", description: "Skriv dine håb og drømme – vi hænger dem op." },
 ];
-//
+
+// Hovedkomponent for program-skærmen
 export default function Program({ navigation }) {
   const now = new Date();
   const route = useRoute();
   const boothId = route?.params?.boothId || null;
 
+  const [tab, setTab] = useState("schedule"); 
 
   const festivalDate = useMemo(() => {
     const thisYear = getFestivalDate(now.getFullYear());
@@ -73,15 +75,10 @@ export default function Program({ navigation }) {
   const close = useMemo(() => timeOnDate(festivalDate, "14:00"), [festivalDate]);
 
   const scheduled = useMemo(() => buildScheduled(festivalDate), [festivalDate]);
-  const items = useMemo(
-    () => scheduled.slice().sort((a, b) => a.start - b.start),
-    [scheduled]
-  );
+  const items = useMemo(() => scheduled.slice().sort((a, b) => a.start - b.start), [scheduled]);
 
-  // Filtrering efter valgt bod/event fra kortet 
   const filteredItems = useMemo(() => {
     if (!boothId) return items;
-    // match på place-feltet 
     return items.filter(
       (it) =>
         it.place?.toLowerCase() === boothId.toLowerCase() ||
@@ -89,7 +86,6 @@ export default function Program({ navigation }) {
     );
   }, [boothId, items]);
 
-// Bestemmer om det er festivaldag, finder næste aktivitet og formaterer dato til læsevenlig tekst
   const isFestivalDay = isSameCalendarDay(now, open);
   const firstUpcoming = isFestivalDay ? items.find((a) => now < a.start) : null;
   const firstUpcomingId = firstUpcoming?.id;
@@ -109,14 +105,14 @@ export default function Program({ navigation }) {
     return (
       <Pressable
         onPress={() =>
-          navigation.navigate('ActivityDetails', {
+          navigation.navigate("ActivityDetails", {
             activity: {
               id: item.id,
               title: item.title,
-              type: 'scheduled',
-              timeLabel: `${fmtHM(item.start)}–${fmtHM(item.end)}`,          // string
-              place: item.place,  // string
-              description: '',    // valgfrit felt, hold det som string
+              type: "scheduled",
+              timeLabel: `${fmtHM(item.start)}–${fmtHM(item.end)}`,
+              place: item.place,
+              description: "",
             },
           })
         }
@@ -125,7 +121,9 @@ export default function Program({ navigation }) {
         accessibilityLabel={`${item.title} ${fmtHM(item.start)}–${fmtHM(item.end)}. Åbn detaljer.`}
       >
         <View style={Styles.cardRowTop}>
-          <Text style={Styles.time}>{fmtHM(item.start)}–{fmtHM(item.end)}</Text>
+          <Text style={Styles.time}>
+            {fmtHM(item.start)}–{fmtHM(item.end)}
+          </Text>
           {isNow && <Text style={[Styles.badge, Styles.badgeNow]}>NU</Text>}
           {!isNow && isNext && <Text style={[Styles.badge, Styles.badgeNext]}>NÆSTE</Text>}
         </View>
@@ -135,17 +133,16 @@ export default function Program({ navigation }) {
     );
   };
 
-  // Funktion der renderer aktiviteter, som varer hele dagen, som trykbare kort med titel og label
   const renderAllDay = ({ item }) => (
     <Pressable
       onPress={() =>
-        navigation.navigate('ActivityDetails', {
+        navigation.navigate("ActivityDetails", {
           activity: {
             id: item.id,
             title: item.title,
-            type: 'allDay',
-            timeLabel: 'Hele dagen', // <- string
-            description: item.description || '',
+            type: "allDay",
+            timeLabel: "Hele dagen",
+            description: item.description || "",
           },
         })
       }
@@ -156,16 +153,21 @@ export default function Program({ navigation }) {
       <Text style={Styles.miniTitle}>{item.title}</Text>
       <View style={Styles.miniMetaRow}>
         <Text style={Styles.miniTime}>Hele dagen</Text>
-        <Text style={[Styles.badgeChip, Styles.badgeAllDay]}>ALL DAY</Text>
+        <Text style={[Styles.badgeChip, Styles.badgeAllDay]}>HELE DAGEN</Text>
       </View>
     </Pressable>
   );
 
-  // Returnerer hovedlayoutet for programskærmen med overskrift, tidsplan og heldagsaktiviteter
+  const Empty = ({ label }) => (
+    <View style={Styles.emptyWrap} accessible accessibilityLabel="Ingen aktiviteter fundet">
+      <Text style={Styles.emptyTitle}>Ingen {label}</Text>
+      <Text style={Styles.emptySub}>Prøv at fjerne filtre eller kig forbi Info-teltet.</Text>
+    </View>
+  );
+
   return (
-    <SafeAreaView style={Styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={Styles.container} edges={["top", "left", "right"]}>
       <View style={Styles.container}>
-        {/* Header */}
         <View style={Styles.header}>
           <Text style={Styles.pageTitle}>Dagens program</Text>
           <Text style={Styles.sub}>
@@ -173,26 +175,50 @@ export default function Program({ navigation }) {
           </Text>
         </View>
 
-        {/* Tidsplan */}
-        <Text style={Styles.sectionHeader}>Tidsplan</Text>
-        <FlatList
-          data={items}
-          keyExtractor={(it) => it.id}
-          renderItem={renderScheduled}
-          contentContainerStyle={{ paddingBottom: 12 }}
-        />
-
-        {/* All day section */}
-        <View style={Styles.allDayHeaderRow}>
-          <Text style={Styles.sectionHeader}>Aktiviteter hele dagen</Text>
-          <Text style={Styles.allDayPill}>Hele dagen</Text>
+        <View style={Styles.segmented} accessibilityRole="tablist">
+          <Pressable
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab === "schedule" }}
+            onPress={() => setTab("schedule")}
+            style={[Styles.segmentBtn, tab === "schedule" && Styles.segmentBtnActive]}
+          >
+            <Text style={[Styles.segmentLabel, tab === "schedule" && Styles.segmentLabelActive]}>
+              Tidsplan
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab === "allday" }}
+            onPress={() => setTab("allday")}
+            style={[Styles.segmentBtn, tab === "allday" && Styles.segmentBtnActive]}
+          >
+            <Text style={[Styles.segmentLabel, tab === "allday" && Styles.segmentLabelActive]}>
+              Aktiviteter hele dagen
+            </Text>
+          </Pressable>
         </View>
-        <FlatList
-          data={allDayActivities}
-          keyExtractor={(it) => it.id}
-          renderItem={renderAllDay}
-          contentContainerStyle={{ paddingBottom: 24 }}
-        />
+
+        <View style={Styles.contentWrap}>
+          {tab === "schedule" ? (
+            <FlatList
+              data={filteredItems}
+              keyExtractor={(it) => it.id}
+              renderItem={renderScheduled}
+              contentContainerStyle={{ paddingBottom: 16 }}
+              ListEmptyComponent={<Empty label="planlagte aktiviteter" />}
+              accessibilityLabel="Liste over planlagte aktiviteter"
+            />
+          ) : (
+            <FlatList
+              data={allDayActivities}
+              keyExtractor={(it) => it.id}
+              renderItem={renderAllDay}
+              contentContainerStyle={{ paddingBottom: 24 }}
+              ListEmptyComponent={<Empty label="heldagsaktiviteter" />}
+              accessibilityLabel="Liste over heldagsaktiviteter"
+            />
+          )}
+        </View>
       </View>
     </SafeAreaView>
   );

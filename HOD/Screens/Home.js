@@ -198,13 +198,6 @@ export default function Home({ navigation }) {
           ))}
         </View>
       )}
-
-      <Text style={Styles.descriptionTitle}>Hvad er Håb & Drømme Festivalen?</Text>
-      <Text style={Styles.description}>
-        En tryg éndagsfestival med ro, nærvær og aktiviteter for alle.
-        På dagen finder du bl.a. sanselige aktiviteter, kreative værksteder og rolige zoner.
-      </Text>
-
       <View style={Styles.quickRow} accessible accessibilityRole="menu">
         <Pressable
           style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
@@ -234,20 +227,31 @@ export default function Home({ navigation }) {
         </Pressable>
       </View>
 
-      <View style={Styles.contactSection}>
-        <Text style={Styles.descriptionTitle}>Har du brug for hjælp?</Text>
-        {CONTACTS.map((c, i) => (
-          <Pressable
-            key={i}
-            onPress={() => Linking.openURL(`tel:${c.phone}`)}
-            accessibilityRole="button"
-            accessibilityLabel={`Ring til ${c.name}`}
-            style={Styles.contactItem}
-          >
-            <Text style={Styles.contactText}>{c.name} – {c.phone.replace(/(\d{2})(?=\d)/g, '$1 ')}</Text>
-          </Pressable>
-        ))}
-      </View>
+     <View style={Styles.helpCard} accessible accessibilityRole="summary">
+  <View style={Styles.helpHeaderRow}>
+    <Text style={Styles.helpTitle}>Har du brug for hjælp?</Text>
+    <Text style={Styles.helpSub}>Ring til en pædagog</Text>
+  </View>
+
+  <View style={Styles.contactList} accessible accessibilityLabel="Kontakt pædagoger">
+    {CONTACTS.map((c, i) => (
+      <Pressable
+        key={i}
+        onPress={() => Linking.openURL(`tel:${c.phone}`)}
+        accessibilityRole="button"
+        accessibilityLabel={`Ring til ${c.name}`}
+        style={({ pressed }) => [
+          Styles.contactButton,
+          pressed && Styles.contactButtonPressed,
+        ]}
+      >
+        <Text style={Styles.contactButtonText}>
+          {c.name} — {c.phone.replace(/(\d{2})(?=\d)/g, '$1 ')}
+        </Text>
+      </Pressable>
+    ))}
+  </View>
+</View>
     </View>
     </SafeAreaView>
   );

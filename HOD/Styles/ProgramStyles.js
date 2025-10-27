@@ -87,8 +87,6 @@ export default StyleSheet.create({
     backgroundColor: Colors.accent,
     color: Colors.text,
   },
-
-  /* All-day section */
   allDayHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -137,4 +135,58 @@ export default StyleSheet.create({
     backgroundColor: Colors.secondary,
     color: "#FFFFFF",
   },
+  segmented: {
+  flexDirection: "row",
+  backgroundColor: Colors.surface,
+  borderRadius: 12,
+  padding: 4,
+  marginHorizontal: 0,
+  marginTop: 8,
+  gap: 6,
+  borderWidth: 1,
+  borderColor: "#D9C9A6",
+  shadowColor: "#000",
+  shadowOpacity: 0.04,
+  shadowRadius: 6,
+  elevation: 1,
+},
+segmentBtn: {
+  flex: 1,
+  borderRadius: 10,
+  paddingVertical: 10,
+  alignItems: "center",
+},
+segmentBtnActive: {
+  backgroundColor: Colors.primary,
+},
+segmentLabel: {
+  fontSize: 14,
+  fontWeight: "700",
+  color: Colors.primary,
+},
+segmentLabelActive: {
+  color: Colors.surface,
+},
+
+contentWrap: {
+  paddingHorizontal: 0,
+  paddingTop: 12,
+  flex: 1,
+},
+
+emptyWrap: {
+  alignItems: "center",
+  justifyContent: "center",
+  paddingVertical: 32,
+},
+emptyTitle: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: Colors.text,
+  marginBottom: 4,
+},
+emptySub: {
+  fontSize: 14,
+  color: Colors.mutedText,
+},
 });

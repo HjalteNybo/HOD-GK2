@@ -9,13 +9,12 @@ const Colors = {
   accent: '#F6C65B',     // gul badge/dato
   text: '#1E1E1E',       // primær tekst
   mutedText: '#5C7E8C',  // blågrå sekundær tekst
-  success: '#B9D08B',    // lys græsgrøn (rolige flader)
+  success: '#B9D08B',    // lys græsgrøn 
   alert: '#C23B22',      // rød (ændringer)
   alertBg: '#F7D6D0',    // lys rød baggrund til alerts
 };
 
 export default StyleSheet.create({
-  /* Layout & header */
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -41,8 +40,6 @@ export default StyleSheet.create({
     color: Colors.text,
     marginBottom: 8,
   },
-
-  /* Countdown */
   countdownIntro: {
     fontSize: 16,
     color: Colors.mutedText,
@@ -76,10 +73,8 @@ export default StyleSheet.create({
   timeLabel: {
     color: Colors.text,
   },
-
-  /* Today (på dagen) */
   todayCard: {
-    backgroundColor: Colors.accent, // tydeligt banner på dagen
+    backgroundColor: Colors.accent,
     borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -102,8 +97,6 @@ export default StyleSheet.create({
   bold: {
     fontWeight: '800',
   },
-
-  /* Alert / ændringer */
   alertCard: {
     backgroundColor: Colors.alertBg,
     borderRadius: 16,
@@ -117,8 +110,6 @@ export default StyleSheet.create({
     color: Colors.alert,
     marginBottom: 4,
   },
-
-  /* Beskrivelse */
   descriptionTitle: {
     fontSize: 18,
     fontWeight: '800',
@@ -131,8 +122,6 @@ export default StyleSheet.create({
     color: Colors.mutedText,
     marginBottom: 12,
   },
-
-  /* Hurtige genveje */
   quickRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -143,14 +132,12 @@ export default StyleSheet.create({
   flex: 1,
   borderWidth: 1,
   borderColor: 'transparent',
-  backgroundColor: '#3E6B39', // primary (mørk grøn) — udfyldt
+  backgroundColor: '#3E6B39', 
   borderRadius: 14,
   paddingVertical: 14,
   paddingHorizontal: 8,
   alignItems: 'center',
   marginHorizontal: 4,
-
-  // lidt “card”-fornemmelse
   shadowColor: '#000',
   shadowOpacity: 0.08,
   shadowRadius: 8,
@@ -159,16 +146,16 @@ export default StyleSheet.create({
 },
 quickButtonText: {
   fontWeight: '700',
-  color: '#FFFFFF', // hvid tekst for kontrast
+  color: '#FFFFFF', 
 },
 quickButtonPressed: {
-  opacity: 0.9, // visuel feedback ved tryk
+  opacity: 0.9, 
 },
 quickButtonOrange: {
   flex: 1,
   borderWidth: 1,
   borderColor: 'transparent',
-  backgroundColor: '#F28C38', // varm orange
+  backgroundColor: '#F28C38', 
   borderRadius: 14,
   paddingVertical: 14,
   paddingHorizontal: 8,
@@ -187,8 +174,6 @@ quickButtonTextLight: {
 quickButtonPressed: {
   opacity: 0.9,
 },
-
-  /* Kontakt & hjælp */
   helpSection: {
     marginTop: 8,
     backgroundColor: Colors.surface,
@@ -202,4 +187,125 @@ quickButtonPressed: {
     fontWeight: '600',
     color: Colors.text,
   },
+dateText: {
+  fontWeight: '600',
+  color: Colors.text,
+  marginBottom: 8,
+},
+preInfoTagline: {
+  fontSize: 16,
+  color: Colors.mutedText,
+  marginBottom: 10,
+},
+helpCard: {
+  backgroundColor: Colors.surface,
+  borderRadius: 16,
+  padding: 14,
+  borderWidth: 1,
+  borderColor: '#D9C9A6',
+  marginTop: 6,
+  marginBottom: 12,
+  shadowColor: '#000',
+  shadowOpacity: 0.05,
+  shadowRadius: 8,
+  elevation: 2,
+},
+helpHeaderRow: {
+  marginBottom: 8,
+},
+helpTitle: {
+  fontSize: 18,
+  fontWeight: '800',
+  color: Colors.primary,
+},
+helpSub: {
+  color: Colors.mutedText,
+  marginTop: 2,
+},
+helpActionsRow: {
+  flexDirection: 'row',
+  gap: 8,
+  marginTop: 8,
+},
+helpAction: {
+  flex: 1,
+  borderRadius: 12,
+  paddingVertical: 12,
+  paddingHorizontal: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+  gap: 8,
+  borderWidth: 1,
+},
+helpActionPrimary: {
+  backgroundColor: Colors.primary,
+  borderColor: Colors.primary,
+},
+helpActionSecondary: {
+  backgroundColor: Colors.secondary,
+  borderColor: Colors.secondary,
+},
+helpActionSurface: {
+  backgroundColor: Colors.surface,
+  borderColor: '#D9C9A6',
+},
+helpActionPressed: { opacity: 0.92 },
+helpActionIconWrap: {
+  width: 28,
+  height: 28,
+  borderRadius: 14,
+  backgroundColor: 'rgba(255,255,255,0.18)',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+helpActionIconWrapSurface: {
+  width: 28,
+  height: 28,
+  borderRadius: 14,
+  backgroundColor: 'rgba(62,107,57,0.12)',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+helpActionText: {
+  fontWeight: '700',
+  color: Colors.primary,
+},
+helpActionTextLight: {
+  fontWeight: '700',
+  color: '#FFFFFF',
+},
+emergencyButton: {
+  backgroundColor: Colors.alert,
+  borderColor: Colors.alert,
+},
+
+contactList: {
+  marginTop: 6,
+  gap: 8,
+},
+
+contactButton: {
+  backgroundColor: Colors.primary, 
+  borderColor: Colors.primary,
+  borderWidth: 1,
+  borderRadius: 12,
+  paddingVertical: 12,
+  paddingHorizontal: 12,
+  alignItems: 'center',
+  justifyContent: 'center',
+  shadowColor: '#000',
+  shadowOpacity: 0.05,
+  shadowRadius: 6,
+  elevation: 2,
+},
+
+contactButtonPressed: {
+  opacity: 0.92,
+},
+
+contactButtonText: {
+  fontWeight: '800',
+  color: '#FFFFFF',     
+},
 });
