@@ -355,4 +355,32 @@ signupButtonText: {
 signupButtonPressed: {
   opacity: 0.9,
 },
+chooseVersionText: {
+  fontWeight: '800',
+  color: Colors.text,
+  marginBottom: 8,
+  fontSize: 20,
+  textAlign: 'center',
+},
+backBtn: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#3E6B39',
+  paddingVertical: 8,
+  paddingHorizontal: 10,
+  borderRadius: 14,
+  alignSelf: 'flex-start',
+  shadowColor: '#000',
+  shadowOpacity: 0.08,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 2,
+  marginBottom: 8,
+  },
+backBtnPressed: { opacity: 0.9 },
+backText: {
+  color: '#FFFFFF',
+  fontWeight: '800',
+  marginLeft: 2,
+  },
 });

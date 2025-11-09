@@ -3,7 +3,6 @@ import { View, Text, AccessibilityInfo, Pressable, Linking } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from '../Styles/HomeStyles';
 import { getFirestore, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { Ionicons } from "@expo/vector-icons";
 
 
 //finder datoen for “sidste torsdag i august” i et givent år
@@ -70,7 +69,7 @@ const CONTACTS = [
   { name: 'Info-teltet', phone: '88888888' },
 ];
 
-export default function Home({ navigation }) {
+export default function ChooseVersion({ navigation }) {
   // Find næste festivaldato dynamisk
   const festivalDate = useMemo(() => {
     const today = new Date();
@@ -151,18 +150,8 @@ export default function Home({ navigation }) {
   //header, nedtælling/“i dag”, ændringer, beskrivelse, genveje og kontakt
   return (
     <SafeAreaView style={Styles.container} edges={['top']}>
-    <View style={Styles.container} accessible accessibilityLabel="Hjemmeskærm med nedtælling og festivalbeskrivelse">
+    <View style={Styles.container} accessible accessibilityLabel="Vælg app-version">
       <View style={Styles.header}>
-                <Pressable
-          onPress={() => navigation.goBack()}
-          accessibilityRole="button"
-          accessibilityLabel="Tilbage"
-          style={({ pressed }) => [Styles.backBtn, pressed && Styles.backBtnPressed]}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
-          <Text style={Styles.backText}>Tilbage</Text>
-        </Pressable>
         <Text style={Styles.title}>Håb & Drømme Festival</Text>
         <View style={Styles.accentBar} />
       </View>
@@ -227,65 +216,30 @@ export default function Home({ navigation }) {
      ))}
    </View>
     )}
+    
+      <Text style={Styles.chooseVersionText}>
+        Vælg din oplevelse
+      </Text>
+
       <View style={Styles.quickRow} accessible accessibilityRole="menu">
         <Pressable
           style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Program')}
+          onPress={() => navigation.navigate('SimpleVersionStack')}
           accessibilityRole="button"
-          accessibilityLabel="Se programmet"
+          accessibilityLabel="Simpel version"
         >
-        <Text style={Styles.quickButtonText}>Program</Text>
+        <Text style={Styles.quickButtonText}>Simpel version</Text>
         </Pressable>
 
         <Pressable
           style={({ pressed }) => [Styles.quickButtonOrange, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Galleri')} 
+          onPress={() => navigation.navigate('FullVersionStack')} 
           accessibilityRole="button"
-          accessibilityLabel="Åbn galleri"
+          accessibilityLabel="Mere informerende version"
         >
-          <Text style={Styles.quickButtonTextLight}>Galleri</Text>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Pladsen')} 
-          accessibilityRole="button"
-          accessibilityLabel="Åbn kort"
-        >
-          <Text style={Styles.quickButtonText}>Kort</Text>
+          <Text style={Styles.quickButtonTextLight}>Udvidet version</Text>
         </Pressable>
       </View>
-
-{/* Tilmelding / billet-info */}
-<View style={Styles.signupCard} accessible accessibilityRole="summary" accessibilityLabel="Tilmelding til festival">
-  <Text style={Styles.signupTitle}>Har du ikke billet endnu?</Text>
-  <Text style={Styles.signupText}>
-    Meld dig til ved at ringe på {SIGNUP_PHONE.replace(/(\d{2})(?=\d)/g, '$1 ')}{" "}
-    eller skrive en mail til {SIGNUP_EMAIL}.
-  </Text>
-
-  <View style={Styles.signupRow}>
-    <Pressable
-      onPress={() => Linking.openURL(`tel:${SIGNUP_PHONE}`)}
-      accessibilityRole="button"
-      accessibilityLabel={`Ring ${SIGNUP_PHONE}`}
-      style={({ pressed }) => [Styles.signupButton, pressed && Styles.signupButtonPressed]}
-    >
-      <Text style={Styles.signupButtonText}>Ring</Text>
-    </Pressable>
-
-    <Pressable
-      onPress={() => Linking.openURL(
-        `mailto:${SIGNUP_EMAIL}?subject=Tilmelding%20til%20H%C3%A5b%20%26%20Dr%C3%B8mme%20Festival`
-      )}
-      accessibilityRole="button"
-      accessibilityLabel={`Skriv mail til ${SIGNUP_EMAIL}`}
-      style={({ pressed }) => [Styles.signupButtonAlt, pressed && Styles.signupButtonPressed]}
-    >
-      <Text style={Styles.signupButtonText}>Skriv mail</Text>
-    </Pressable>
-  </View>
-</View>
 
      <View style={Styles.helpCard} accessible accessibilityRole="summary">
   <View style={Styles.helpHeaderRow}>

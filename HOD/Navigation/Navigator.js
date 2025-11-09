@@ -12,11 +12,22 @@ import Upload from '../Screens/Uploads';
 import MapScreen from '../Screens/MapScreen';
 import ClassicMap from '../Screens/ClassicMap';
 import ProgramChanges from '../Screens/ProgramChanges';
-
+import SimpleVersion from "../Screens/SimpleVersionScreen";
+import ChooseVersion from "../Screens/ChooseVersionScreen";
 
 // Opretter navigator-instanser
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
+
+function SimpleVersionStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="SimpleVersion" component={SimpleVersion} />
+      <Stack.Screen name="ActivityDetails" component={ActivityDetails} />
+    </Stack.Navigator>
+  )
+}
 
 // Stack til Program-fanen (liste -> detaljer)
 function ProgramStack() {
@@ -53,8 +64,7 @@ function PersonaleStack() {
   );
 }
 
-// Hovednavigator med bundfaner
-export default function Navigator() {
+function FullVersionNavigator() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -85,5 +95,15 @@ export default function Navigator() {
       <Tab.Screen name="Galleri" component={GalleryStack} options={{ tabBarAccessibilityLabel: "Gå til Galleri" }} />
       <Tab.Screen name="Personale" component={PersonaleStack} options={{ tabBarAccessibilityLabel: 'Personale login' }} />
     </Tab.Navigator>
+  );
+}
+
+export default function ChooseVersionNavigator() {
+  return (
+    <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Screen name="ChooseVersion" component={ChooseVersion}/>
+      <RootStack.Screen name="SimpleVersionStack" component={SimpleVersionStack}/>
+      <RootStack.Screen name="FullVersionStack" component={FullVersionNavigator}/>
+    </RootStack.Navigator>
   );
 }
