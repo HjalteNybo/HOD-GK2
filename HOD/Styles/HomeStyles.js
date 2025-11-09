@@ -308,4 +308,51 @@ contactButtonText: {
   fontWeight: '800',
   color: '#FFFFFF',     
 },
+signupCard: {
+  marginTop: 16,
+  marginHorizontal: 0,
+  padding: 14,
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: '#D9C9A6',
+  backgroundColor: '#ffffffff',
+  gap: 8,
+},
+signupTitle: {
+  fontSize: 18,
+  fontWeight: '800',
+  color: Colors.primary,
+},
+signupText: {
+  fontSize: 14,
+  lineHeight: 20,
+},
+signupRow: {
+  flexDirection: 'row',
+  gap: 10,
+  marginTop: 6,
+},
+signupButton: {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingVertical: 10,
+  borderRadius: 10,
+  backgroundColor: '#3E6B39', // grøn som i dine andre knapper
+},
+signupButtonAlt: {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingVertical: 10,
+  borderRadius: 10,
+  backgroundColor: '#F28C38', // orange
+},
+signupButtonText: {
+  color: '#fff',
+  fontWeight: '800',
+},
+signupButtonPressed: {
+  opacity: 0.9,
+},
 });

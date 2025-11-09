@@ -11,6 +11,7 @@ import Login from "../Screens/Login";
 import Upload from '../Screens/Uploads';
 import MapScreen from '../Screens/MapScreen';
 import ClassicMap from '../Screens/ClassicMap';
+import ProgramChanges from '../Screens/ProgramChanges';
 
 
 // Opretter navigator-instanser
@@ -47,6 +48,7 @@ function PersonaleStack() {
       <Stack.Screen name="StaffLogin" component={Login} />
       <Stack.Screen name="Upload" component={Upload} />
       <Stack.Screen name="MediaViewer" component={MediaViewer} options={{ headerShown: true, headerTransparent: false, headerTintColor: '#fff', headerStyle: { backgroundColor: '#000' } }} />
+      <Stack.Screen name="ProgramChanges" component={ProgramChanges} options={{ title: 'Programændringer' }} />
     </Stack.Navigator>
   );
 }

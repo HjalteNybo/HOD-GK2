@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, AccessibilityInfo, Pressable, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from '../Styles/HomeStyles';
+import { getFirestore, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+
 
 //finder datoen for “sidste torsdag i august” i et givent år
 function getFestivalDate(year) {
@@ -56,11 +58,11 @@ function buildProgram(festivalDate) {
 }
 
 // liste over vigtige ændringer (vises kun hvis der er noget)
-const CHANGES = [
-  'Ændring: Brandbilen er blevet sendt ud til en brand, så den kommer desværre ikke i dag.'
-];
+
 
 // Kontakt (midlertidige numre)
+const SIGNUP_PHONE = '88888888';
+const SIGNUP_EMAIL = 'info@haabogdroemme.dk';
 const CONTACTS = [
   { name: 'Anna', phone: '88888888' },
   { name: 'Jonas', phone: '88888888' },
@@ -128,6 +130,22 @@ export default function Home({ navigation }) {
   const niceDate = festivalDate.toLocaleDateString('da-DK', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   });
+  
+  const [changes, setChanges] = useState([]);
+
+  useEffect(() => {
+    const db = getFirestore(); // bruger default app (du har den allerede igang til storage)
+    // Vis kun aktive ændringer, nyeste først
+    const q = query(
+      collection(db, 'programChanges'),
+      where('active', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setChanges(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return unsub;
+  }, []);
 
   //header, nedtælling/“i dag”, ændringer, beskrivelse, genveje og kontakt
   return (
@@ -191,13 +209,13 @@ export default function Home({ navigation }) {
         </View>
       )}
 
-      {CHANGES.length > 0 && (
-        <View style={Styles.alertCard} accessibilityLabel="Vigtige ændringer">
-          {CHANGES.map((msg, i) => (
-            <Text key={i} style={Styles.alertText}>{msg}</Text>
-          ))}
-        </View>
-      )}
+      {changes.length > 0 && (
+    <View style={Styles.alertCard} accessibilityLabel="Vigtige ændringer">
+     {changes.map((c) => (
+      <Text key={c.id} style={Styles.alertText}>{c.text}</Text>
+     ))}
+   </View>
+    )}
       <View style={Styles.quickRow} accessible accessibilityRole="menu">
         <Pressable
           style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
@@ -226,6 +244,37 @@ export default function Home({ navigation }) {
           <Text style={Styles.quickButtonText}>Kort</Text>
         </Pressable>
       </View>
+
+{/* Tilmelding / billet-info */}
+<View style={Styles.signupCard} accessible accessibilityRole="summary" accessibilityLabel="Tilmelding til festival">
+  <Text style={Styles.signupTitle}>Har du ikke billet endnu?</Text>
+  <Text style={Styles.signupText}>
+    Meld dig til ved at ringe på {SIGNUP_PHONE.replace(/(\d{2})(?=\d)/g, '$1 ')}{" "}
+    eller skrive en mail til {SIGNUP_EMAIL}.
+  </Text>
+
+  <View style={Styles.signupRow}>
+    <Pressable
+      onPress={() => Linking.openURL(`tel:${SIGNUP_PHONE}`)}
+      accessibilityRole="button"
+      accessibilityLabel={`Ring ${SIGNUP_PHONE}`}
+      style={({ pressed }) => [Styles.signupButton, pressed && Styles.signupButtonPressed]}
+    >
+      <Text style={Styles.signupButtonText}>Ring</Text>
+    </Pressable>
+
+    <Pressable
+      onPress={() => Linking.openURL(
+        `mailto:${SIGNUP_EMAIL}?subject=Tilmelding%20til%20H%C3%A5b%20%26%20Dr%C3%B8mme%20Festival`
+      )}
+      accessibilityRole="button"
+      accessibilityLabel={`Skriv mail til ${SIGNUP_EMAIL}`}
+      style={({ pressed }) => [Styles.signupButtonAlt, pressed && Styles.signupButtonPressed]}
+    >
+      <Text style={Styles.signupButtonText}>Skriv mail</Text>
+    </Pressable>
+  </View>
+</View>
 
      <View style={Styles.helpCard} accessible accessibilityRole="summary">
   <View style={Styles.helpHeaderRow}>

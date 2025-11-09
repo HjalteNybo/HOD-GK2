@@ -17,7 +17,7 @@ export default function Login({ navigation }) {
     );
   }
 
-  // Viser brugerinfo og logout-knap hvis brugeren er logget ind
+  // Viser brugerinfo, knap til upload, knap til ændringer og logout-knap hvis brugeren er logget ind
   if (user) {
     return (
       <View style={{ flex:1, padding:16, gap:12, justifyContent:'center' }}>
@@ -37,6 +37,19 @@ export default function Login({ navigation }) {
             <Text style={{ color:'#fff', fontWeight:'800' }}>Upload filer</Text>
           </Pressable>
         )}
+
+        {isStaff && (
+            <Pressable
+                onPress={() => navigation.navigate('ProgramChanges')}
+                style={({pressed}) => [
+                { backgroundColor:'#3E6B39', padding:12, borderRadius:10, alignItems:'center' },
+                pressed && { opacity:0.9 }
+            ]}
+            accessibilityLabel="Redigér programændringer"
+            >
+            <Text style={{ color:'#fff', fontWeight:'800' }}>Ændringer i program</Text>
+        </Pressable>
+)}
 
         <Pressable
           onPress={logout}
@@ -87,6 +100,18 @@ export default function Login({ navigation }) {
       >
         {opLoading ? <ActivityIndicator color="#fff" /> : <Text style={{ color:'#fff', fontWeight:'700' }}>Log ind</Text>}
       </Pressable>
+      {isStaff && (
+  <Pressable
+    onPress={() => navigation.navigate('ProgramChanges')}
+    style={({pressed}) => [
+      { backgroundColor:'#3E6B39', padding:12, borderRadius:10, alignItems:'center' },
+      pressed && { opacity:0.9 }
+    ]}
+    accessibilityLabel="Redigér programændringer"
+  >
+    <Text style={{ color:'#fff', fontWeight:'800' }}>Ændringer i program</Text>
+  </Pressable>
+)}
     </View>
   );
 }
