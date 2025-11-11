@@ -32,7 +32,7 @@ export default function ActivityDetails({ route, navigation }) {
         <Text style={Styles.metaLine}>
           Tid: <Text style={Styles.metaStrong}>{timeLabel}</Text>
         </Text>
-        <Text style={Styles.metaHint}>Sted: Se på kortet eller spørg i Info-teltet</Text>
+        <Text style={Styles.metaHint}>Sted: Se på kortet</Text>
       </View>
 
       {description ? (

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, AccessibilityInfo, Pressable, Linking } from 'react-native';
+import { View, Text, AccessibilityInfo, Pressable, Linking, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from '../Styles/HomeStyles';
 import { getFirestore, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
@@ -43,22 +43,6 @@ function getDayState(now, festStart, festEnd) {
   };
 }
 
-//det fastlagte dagsprogram med start/slut tider på festivaldatoen
-function buildProgram(festivalDate) {
-  const S = (t) => timeOnDate(festivalDate, t);
-  return [
-    { title: 'Velkomst ved borgerrådet og Henrik', start: S('10:00'), end: S('10:05'), place: 'Hovedområde' },
-    { title: 'Sunshine Band', start: S('10:05'), end: S('10:30'), place: 'Scene' },
-    { title: 'Yoga', start: S('10:30'), end: S('10:50'), place: 'Sanseområdet' },
-    { title: 'Karaoke', start: S('10:50'), end: S('12:00'), place: 'Telt A' },
-    { title: 'Pause', start: S('12:00'), end: S('12:30'), place: 'Fællesområde' },
-    { title: 'DJ Denner', start: S('12:30'), end: S('13:00'), place: 'Scene' },
-    { title: 'Karaoke', start: S('13:00'), end: S('14:00'), place: 'Telt A' },
-  ];
-}
-
-// liste over vigtige ændringer (vises kun hvis der er noget)
-
 
 // Kontakt (midlertidige numre)
 const SIGNUP_PHONE = '88888888';
@@ -82,7 +66,32 @@ export default function Home({ navigation }) {
   const festivalClose = useMemo(() => timeOnDate(festivalDate, '14:00'), [festivalDate]);
 
   //program med konkrete datoer
-  const program = useMemo(() => buildProgram(festivalDate), [festivalDate]);
+const toDate = (t) => (t?.toDate ? t.toDate() : new Date(t));
+
+const dayStart = useMemo(
+  () => new Date(festivalDate.getFullYear(), festivalDate.getMonth(), festivalDate.getDate(), 0, 0, 0),
+  [festivalDate]
+);
+const nextDayStart = useMemo(
+  () => new Date(festivalDate.getFullYear(), festivalDate.getMonth(), festivalDate.getDate() + 1, 0, 0, 0),
+  [festivalDate]
+);
+
+const [events, setEvents] = useState([]);
+
+useEffect(() => {
+  const db = getFirestore();
+  const q = query(
+    collection(db, 'events'),
+    where('start', '>=', dayStart),
+    where('start', '<', nextDayStart),
+    orderBy('start', 'asc')
+  );
+  const unsub = onSnapshot(q, (snap) => {
+    setEvents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  }, (err) => console.warn('events listen error:', err));
+  return unsub;
+}, [dayStart, nextDayStart]);
 
   //udregner tid der er tilbage til åbningstid (bruges af nedtællingen)
   const getTimeLeft = () => {
@@ -117,15 +126,15 @@ export default function Home({ navigation }) {
 
   //finder igangværende aktivitet eller næste aktivitet i dag
   let nowOrNext = null;
-  if (isFestivalDay) {
-    const current = program.find(a => now >= a.start && now < a.end);
-    if (current) {
-      nowOrNext = { mode: 'now', item: current };
-    } else {
-      const upcoming = program.find(a => now < a.start);
-      if (upcoming) nowOrNext = { mode: 'next', item: upcoming };
-    }
+if (isFestivalDay && events.length) {
+  const current = events.find(a => now >= toDate(a.start) && now < toDate(a.end));
+  if (current) {
+    nowOrNext = { mode: 'now', item: current };
+  } else {
+    const upcoming = events.find(a => now < toDate(a.start));
+    if (upcoming) nowOrNext = { mode: 'next', item: upcoming };
   }
+}
   //læsevenlig dato-tekst
   const niceDate = festivalDate.toLocaleDateString('da-DK', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
@@ -150,7 +159,12 @@ export default function Home({ navigation }) {
   //header, nedtælling/“i dag”, ændringer, beskrivelse, genveje og kontakt
   return (
     <SafeAreaView style={Styles.container} edges={['top']}>
-    <View style={Styles.container} accessible accessibilityLabel="Hjemmeskærm med nedtælling og festivalbeskrivelse">
+    <ScrollView
+      style={Styles.container}
+      contentContainerStyle={Styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={Styles.header}>
         <Text style={Styles.title}>Håb & Drømme Festival</Text>
         <View style={Styles.accentBar} />
@@ -187,27 +201,28 @@ export default function Home({ navigation }) {
       )}
 
       {isFestivalDay && (
-        <View style={Styles.todayCard}>
-          <Text style={Styles.todayHeader}>
-            Velkommen! Festivalen er åben kl. {fmtHM(festivalOpen)}–{fmtHM(festivalClose)}
-          </Text>
-          {nowOrNext ? (
-            nowOrNext.mode === 'now' ? (
-              <Text style={Styles.todayLine}>
-                <Text style={Styles.todayStrong}>Nu: </Text>
-                {nowOrNext.item.title} • slutter {fmtHM(nowOrNext.item.end)}
-              </Text>
-            ) : (
-              <Text style={Styles.todayLine}>
-                <Text style={Styles.todayStrong}>Næste: </Text>
-                {nowOrNext.item.title} {fmtHM(nowOrNext.item.start)}–{fmtHM(nowOrNext.item.end)}
-              </Text>
-            )
-          ) : (
-            <Text style={Styles.todayLineStrong}>Dagens program er slut. Tak for i dag!</Text>
-          )}
-        </View>
-      )}
+  <View style={Styles.todayCard}>
+    <Text style={Styles.todayHeader}>
+      Velkommen! Festivalen er åben kl. {fmtHM(festivalOpen)}–{fmtHM(festivalClose)}
+    </Text>
+
+    {nowOrNext ? (
+      nowOrNext.mode === 'now' ? (
+        <Text style={Styles.todayLine}>
+          <Text style={Styles.todayStrong}>Nu: </Text>
+          {nowOrNext.item.title} • slutter {fmtHM(toDate(nowOrNext.item.end))}
+        </Text>
+      ) : (
+        <Text style={Styles.todayLine}>
+          <Text style={Styles.todayStrong}>Næste: </Text>
+          {nowOrNext.item.title} {fmtHM(toDate(nowOrNext.item.start))}–{fmtHM(toDate(nowOrNext.item.end))}
+        </Text>
+      )
+    ) : (
+      <Text style={Styles.todayLineStrong}>Dagens program er slut. Tak for i dag!</Text>
+    )}
+  </View>
+)}
 
       {changes.length > 0 && (
     <View style={Styles.alertCard} accessibilityLabel="Vigtige ændringer">
@@ -301,7 +316,7 @@ export default function Home({ navigation }) {
     ))}
   </View>
 </View>
-    </View>
+    </ScrollView>
     </SafeAreaView>
   );
 }

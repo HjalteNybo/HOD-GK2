@@ -5,14 +5,8 @@ import Styles from "../Styles/ProgramStyles";
 import { useRoute } from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  getFirestore,
-  collection,
-  query,
-  orderBy,
-  limit,
-  onSnapshot,
-} from "firebase/firestore";
+import { getFirestore, collection, query, where, orderBy, onSnapshot, limit, } from "firebase/firestore";
+
 
 // Festivaldato = 4 uger efter første torsdag i august
 function getFestivalDate(year) {
@@ -44,29 +38,6 @@ function isSameCalendarDay(a, b) {
     a.getDate() === b.getDate()
   );
 }
-
-//tidsplan for HOD (taget som eksempel, kan ændres senere)
-function buildScheduled(festivalDate) {
-  const S = (t) => timeOnDate(festivalDate, t);
-  return [
-    { id: "a1", title: "Velkomst ved borgerrådet og Henrik", start: S("10:00"), end: S("10:05"), place: "Hovedområde" },
-    { id: "a2", title: "Sunshine Band", start: S("10:05"), end: S("10:30"), place: "Scene" },
-    { id: "a3", title: "Yoga", start: S("10:30"), end: S("10:50"), place: "Sanseområdet" },
-    { id: "a4", title: "Karaoke", start: S("10:50"), end: S("12:00"), place: "Telt A" },
-    { id: "a5", title: "Pause", start: S("12:00"), end: S("12:30"), place: "Fællesområde" },
-    { id: "a6", title: "DJ Denner", start: S("12:30"), end: S("13:00"), place: "Scene" },
-    { id: "a7", title: "Karaoke", start: S("13:00"), end: S("14:00"), place: "Telt A" },
-  ];
-}
-//Aktiviteter for HOD
-const allDayActivities = [
-  { id: "d1", title: "3-kamp", type: "allDay", description: "Deltag i hyggelig 3-kamp hele dagen." },
-  { id: "d2", title: "Klap et dyr (hund, kanin, hest)", type: "allDay", description: "Rolig dyrestund med frivillige." },
-  { id: "d3", title: "Prøv VR-briller", type: "allDay", description: "Oplev trygge VR-oplevelser." },
-  { id: "d4", title: "Cykeltur", type: "allDay", description: "Guidede små ture ved området." },
-  { id: "d5", title: "Lav mad i køkkenet", type: "allDay", description: "Små madaktiviteter for alle." },
-  { id: "d6", title: "Håb & Drømme-bod", type: "allDay", description: "Skriv dine håb og drømme – vi hænger dem op." },
-];
 
 // -------- Notifikations-hjælpere (program-opdateret) --------
 const PROGRAM_UPDATE_KEY = "program:lastChangeId";
@@ -116,9 +87,61 @@ export default function Program({ navigation }) {
   const open = useMemo(() => timeOnDate(festivalDate, "10:00"), [festivalDate]);
   const close = useMemo(() => timeOnDate(festivalDate, "14:00"), [festivalDate]);
 
-  const scheduled = useMemo(() => buildScheduled(festivalDate), [festivalDate]);
-  const items = useMemo(() => scheduled.slice().sort((a, b) => a.start - b.start), [scheduled]);
+  const dayStart = useMemo(
+    () => new Date(festivalDate.getFullYear(), festivalDate.getMonth(), festivalDate.getDate(), 0, 0, 0),
+    [festivalDate]
+  );
+  const nextDayStart = useMemo(
+    () => new Date(festivalDate.getFullYear(), festivalDate.getMonth(), festivalDate.getDate() + 1, 0, 0, 0),
+    [festivalDate]
+  );
+  const dayKey = useMemo(() => {
+    const y = festivalDate.getFullYear();
+    const m = String(festivalDate.getMonth() + 1).padStart(2, "0");
+    const d = String(festivalDate.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }, [festivalDate]);
 
+  const [events, setEvents] = useState([]); // tidsbestemte punkter
+  const [allDay, setAllDay] = useState([]); // heldagsaktiviteter
+  
+     // Hent dagens tidsbestemte events
+  useEffect(() => {
+    const db = getFirestore();
+    const q = query(
+      collection(db, "events"),
+      where("start", ">=", dayStart),
+      where("start", "<", nextDayStart),
+      orderBy("start", "asc")
+    );
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setEvents(list);
+      },
+      (err) => console.warn("events listen error:", err)
+    );
+    return unsub;
+  }, [dayStart, nextDayStart]);
+
+  // Hent dagens heldagsaktiviteter
+  useEffect(() => {
+    const db = getFirestore();
+    const q = query(collection(db, "allday"), where("dayKey", "==", dayKey));
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        list.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+        setAllDay(list);
+      },
+      (err) => console.warn("allday listen error:", err)
+    );
+    return unsub;
+  }, [dayKey]);
+
+    const items = events; // allerede sorteret i query
   const filteredItems = useMemo(() => {
     if (!boothId) return items;
     return items.filter(
@@ -128,8 +151,13 @@ export default function Program({ navigation }) {
     );
   }, [boothId, items]);
 
-  const isFestivalDay = isSameCalendarDay(now, open);
-  const firstUpcoming = isFestivalDay ? items.find((a) => now < a.start) : null;
+    const isFestivalDay = isSameCalendarDay(now, open);
+  const firstUpcoming = isFestivalDay
+    ? items.find((a) => {
+        const s = a.start?.toDate ? a.start.toDate() : new Date(a.start);
+        return now < s;
+      })
+    : null;
   const firstUpcomingId = firstUpcoming?.id;
 
   const niceDate = festivalDate.toLocaleDateString("da-DK", {
@@ -182,7 +210,9 @@ export default function Program({ navigation }) {
 
   // Funktion der renderer hver planlagt aktivitet som et trykbart kort med tid, titel og sted
   const renderScheduled = ({ item }) => {
-    const isNow = isFestivalDay && now >= item.start && now < item.end;
+    const start = item.start?.toDate ? item.start.toDate() : new Date(item.start);
+    const end = item.end?.toDate ? item.end.toDate() : new Date(item.end);
+    const isNow = isFestivalDay && now >= start && now < end;
     const isNext = isFestivalDay && item.id === firstUpcomingId;
 
     return (
@@ -193,19 +223,19 @@ export default function Program({ navigation }) {
               id: item.id,
               title: item.title,
               type: "scheduled",
-              timeLabel: `${fmtHM(item.start)}–${fmtHM(item.end)}`,
+              timeLabel: `${fmtHM(start)}–${fmtHM(end)}`,
               place: item.place,
-              description: "",
+              description: item.description || "",
             },
           })
         }
         style={({ pressed }) => [Styles.card, pressed && Styles.cardPressed]}
         accessibilityRole="button"
-        accessibilityLabel={`${item.title} ${fmtHM(item.start)}–${fmtHM(item.end)}. Åbn detaljer.`}
+        accessibilityLabel={`${item.title} ${fmtHM(start)}–${fmtHM(end)}. Åbn detaljer.`}
       >
         <View style={Styles.cardRowTop}>
           <Text style={Styles.time}>
-            {fmtHM(item.start)}–{fmtHM(item.end)}
+            {fmtHM(start)}–{fmtHM(end)}
           </Text>
           {isNow && <Text style={[Styles.badge, Styles.badgeNow]}>NU</Text>}
           {!isNow && isNext && <Text style={[Styles.badge, Styles.badgeNext]}>NÆSTE</Text>}
@@ -215,8 +245,7 @@ export default function Program({ navigation }) {
       </Pressable>
     );
   };
-
-  const renderAllDay = ({ item }) => (
+    const renderAllDay = ({ item }) => (
     <Pressable
       onPress={() =>
         navigation.navigate("ActivityDetails", {
@@ -293,7 +322,7 @@ export default function Program({ navigation }) {
             />
           ) : (
             <FlatList
-              data={allDayActivities}
+              data={allDay}
               keyExtractor={(it) => it.id}
               renderItem={renderAllDay}
               contentContainerStyle={{ paddingBottom: 24 }}
