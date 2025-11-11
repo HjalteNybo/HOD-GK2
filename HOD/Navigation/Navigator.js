@@ -9,7 +9,6 @@ import Galleri from "../Screens/Galleri";
 import ActivityDetails from "../Screens/ActivityDetails";
 import Login from "../Screens/Login";
 import Upload from '../Screens/Uploads';
-import MapScreen from '../Screens/MapScreen';
 import ClassicMap from '../Screens/ClassicMap';
 import ProgramChanges from '../Screens/ProgramChanges';
 
@@ -69,7 +68,6 @@ export default function Navigator() {
           if (route.name === "Galleri") icon = focused ? "chatbubbles" : "chatbubbles-outline";
           // NYE/OPDATERDE
           if (route.name === "Plads") icon = focused ? "map" : "map-outline";
-          if (route.name === "Pladsen") icon = focused ? "map" : "map-outline";
           if (route.name === "Personale") icon = focused ? "lock-closed" : "lock-closed-outline";
           return <Ionicons name={icon} size={size} color={color} />;
         },
@@ -80,7 +78,6 @@ export default function Navigator() {
     >
       <Tab.Screen name="Home" component={Home} options={{ tabBarAccessibilityLabel: "Gå til Hjem" }} />
       <Tab.Screen name="Program" component={ProgramStack} options={{ tabBarAccessibilityLabel: "Gå til Program" }} />
-      <Tab.Screen name="Pladsen" component={MapScreen} options={{ tabBarAccessibilityLabel: 'Gå til Pladsen', title: 'Pladsen' }} />
       <Tab.Screen name="Plads" component={ClassicMap} options={{ tabBarAccessibilityLabel: "Gå til Plads (klassisk)", title: "Plads" }} /> 
       <Tab.Screen name="Galleri" component={GalleryStack} options={{ tabBarAccessibilityLabel: "Gå til Galleri" }} />
       <Tab.Screen name="Personale" component={PersonaleStack} options={{ tabBarAccessibilityLabel: 'Personale login' }} />

@@ -28,7 +28,6 @@ function getFestivalDate(year) {
     : new Date(firstThursday.setDate(firstThursday.getDate() + 21));
 }
 
-// Funktion der returnerer et nyt Date-objekt med angivet klokkeslæt på en given dato
 function timeOnDate(date, hhmm) {
   const [h, m] = hhmm.split(":").map(Number);
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), h, m, 0);
@@ -36,7 +35,6 @@ function timeOnDate(date, hhmm) {
 const pad2 = (x) => String(x).padStart(2, "0");
 const fmtHM = (dt) => `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
 
-// Tjekker om to datoer er på samme kalenderdag
 function isSameCalendarDay(a, b) {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -45,7 +43,7 @@ function isSameCalendarDay(a, b) {
   );
 }
 
-//tidsplan for HOD (taget som eksempel, kan ændres senere)
+// eksempelprogram (kan ændres)
 function buildScheduled(festivalDate) {
   const S = (t) => timeOnDate(festivalDate, t);
   return [
@@ -58,7 +56,7 @@ function buildScheduled(festivalDate) {
     { id: "a7", title: "Karaoke", start: S("13:00"), end: S("14:00"), place: "Telt A" },
   ];
 }
-//Aktiviteter for HOD
+
 const allDayActivities = [
   { id: "d1", title: "3-kamp", type: "allDay", description: "Deltag i hyggelig 3-kamp hele dagen." },
   { id: "d2", title: "Klap et dyr (hund, kanin, hest)", type: "allDay", description: "Rolig dyrestund med frivillige." },
@@ -68,27 +66,36 @@ const allDayActivities = [
   { id: "d6", title: "Håb & Drømme-bod", type: "allDay", description: "Skriv dine håb og drømme – vi hænger dem op." },
 ];
 
-// -------- Notifikations-hjælpere (program-opdateret) --------
+// --- Notifikationer (throttle så vi ikke spammer) ---
 const PROGRAM_UPDATE_KEY = "program:lastChangeId";
 const PROGRAM_NOTIFY_THROTTLE_KEY = "program:lastNotifiedAtMs";
-const THROTTLE_MINUTES = 10; // undgå spam – justér efter behov
+const THROTTLE_MINUTES = 10;
 
 async function ensureNotifPermissionAndChannel() {
-  const existing = await Notifications.getPermissionsAsync();
-  let granted =
-    existing.granted || existing.ios?.status === Notifications.IosAuthorizationStatus.AUTHORIZED;
-  if (!granted) {
-    const req = await Notifications.requestPermissionsAsync();
-    granted = req.granted || req.ios?.status === Notifications.IosAuthorizationStatus.AUTHORIZED;
+  try {
+    const existing = await Notifications.getPermissionsAsync();
+    let granted =
+      existing.granted ||
+      (existing.ios && existing.ios.status === Notifications.IosAuthorizationStatus.AUTHORIZED);
+
+    if (!granted) {
+      const req = await Notifications.requestPermissionsAsync();
+      granted =
+        req.granted ||
+        (req.ios && req.ios.status === Notifications.IosAuthorizationStatus.AUTHORIZED);
+    }
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("program-updates", {
+        name: "Programopdateringer",
+        importance: Notifications.AndroidImportance.DEFAULT,
+      });
+    }
+    return granted;
+  } catch {
+    return false;
   }
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("program-updates", {
-      name: "Programopdateringer",
-      importance: Notifications.AndroidImportance.DEFAULT,
-    });
-  }
-  return granted;
 }
+
 async function throttled() {
   const now = Date.now();
   const raw = await AsyncStorage.getItem(PROGRAM_NOTIFY_THROTTLE_KEY);
@@ -99,13 +106,12 @@ async function throttled() {
   return false;
 }
 
-// Hovedkomponent for program-skærmen
 export default function Program({ navigation }) {
   const now = new Date();
   const route = useRoute();
-  const boothId = route?.params?.boothId || null;
+  const boothId = (route && route.params && route.params.boothId) ? route.params.boothId : null;
 
-  const [tab, setTab] = useState("schedule"); 
+  const [tab, setTab] = useState("schedule");
   const db = getFirestore();
 
   const festivalDate = useMemo(() => {
@@ -121,16 +127,17 @@ export default function Program({ navigation }) {
 
   const filteredItems = useMemo(() => {
     if (!boothId) return items;
+    const key = String(boothId).toLowerCase();
     return items.filter(
       (it) =>
-        it.place?.toLowerCase() === boothId.toLowerCase() ||
-        it.title?.toLowerCase().includes(boothId.toLowerCase())
+        (it.place && it.place.toLowerCase() === key) ||
+        (it.title && it.title.toLowerCase().includes(key))
     );
   }, [boothId, items]);
 
   const isFestivalDay = isSameCalendarDay(now, open);
   const firstUpcoming = isFestivalDay ? items.find((a) => now < a.start) : null;
-  const firstUpcomingId = firstUpcoming?.id;
+  const firstUpcomingId = firstUpcoming ? firstUpcoming.id : null;
 
   const niceDate = festivalDate.toLocaleDateString("da-DK", {
     weekday: "long",
@@ -139,48 +146,45 @@ export default function Program({ navigation }) {
     year: "numeric",
   });
 
-  // --- Lyt efter admin-ændringer i programmet og vis én notifikation ---
+  // Lyt efter seneste program-ændring og vis én lokal notifikation
   useEffect(() => {
-    const q = query(
+    const qRef = query(
       collection(db, "programChanges"),
       orderBy("createdAt", "desc"),
       limit(1)
     );
+    const unsub = onSnapshot(qRef, async (snap) => {
+      try {
+        const doc = snap.docs[0];
+        if (!doc) return;
 
-    const unsub = onSnapshot(q, async (snap) => {
-      const doc = snap.docs[0];
-      if (!doc) return;
+        const lastId = await AsyncStorage.getItem(PROGRAM_UPDATE_KEY);
+        if (lastId === doc.id) return;
 
-      const lastId = await AsyncStorage.getItem(PROGRAM_UPDATE_KEY);
-      if (lastId === doc.id) return; // samme ændring som sidst → ignorér
+        await AsyncStorage.setItem(PROGRAM_UPDATE_KEY, doc.id);
+        if (await throttled()) return;
 
-      // gem nyeste id så vi ikke duplikerer
-      await AsyncStorage.setItem(PROGRAM_UPDATE_KEY, doc.id);
+        const ok = await ensureNotifPermissionAndChannel();
+        if (!ok) return;
 
-      // undgå spam
-      if (await throttled()) return;
+        const data = doc.data() || {};
+        const body = data.text ? String(data.text).slice(0, 140) : "Tjek dagens program i appen.";
 
-      // tilladelse + kanal
-      const ok = await ensureNotifPermissionAndChannel();
-      if (!ok) return;
-
-      const data = doc.data() || {};
-      const body = data.text ? String(data.text).slice(0, 140) : "Tjek dagens program i appen.";
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Program opdateret",
-          body,
-          data: { type: "program_updated", changeId: doc.id },
-        },
-        trigger: null, // vis nu
-      });
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Program opdateret",
+            body,
+            data: { type: "program_updated", changeId: doc.id },
+          },
+          trigger: null,
+        });
+      } catch {
+        // ignorer i dev
+      }
     });
-
     return () => unsub();
   }, [db]);
 
-  // Funktion der renderer hver planlagt aktivitet som et trykbart kort med tid, titel og sted
   const renderScheduled = ({ item }) => {
     const isNow = isFestivalDay && now >= item.start && now < item.end;
     const isNext = isFestivalDay && item.id === firstUpcomingId;
@@ -201,14 +205,19 @@ export default function Program({ navigation }) {
         }
         style={({ pressed }) => [Styles.card, pressed && Styles.cardPressed]}
         accessibilityRole="button"
-        accessibilityLabel={`${item.title} ${fmtHM(item.start)}–${fmtHM(item.end)}. Åbn detaljer.`}
+        accessibilityLabel={`${item.title}. ${fmtHM(item.start)}–${fmtHM(item.end)}. ${item.place}.`}
+        accessibilityHint="Åbner detaljer om aktiviteten"
+        hitSlop={8}
       >
         <View style={Styles.cardRowTop}>
           <Text style={Styles.time}>
             {fmtHM(item.start)}–{fmtHM(item.end)}
           </Text>
-          {isNow && <Text style={[Styles.badge, Styles.badgeNow]}>NU</Text>}
-          {!isNow && isNext && <Text style={[Styles.badge, Styles.badgeNext]}>NÆSTE</Text>}
+          {isNow ? (
+            <Text style={[Styles.badge, Styles.badgeNow]}>NU</Text>
+          ) : isNext ? (
+            <Text style={[Styles.badge, Styles.badgeNext]}>NÆSTE</Text>
+          ) : null}
         </View>
         <Text style={Styles.title}>{item.title}</Text>
         <Text style={Styles.place}>{item.place}</Text>
@@ -231,7 +240,9 @@ export default function Program({ navigation }) {
       }
       style={({ pressed }) => [Styles.miniCard, pressed && Styles.cardPressed]}
       accessibilityRole="button"
-      accessibilityLabel={`${item.title}. Hele dagen. Åbn detaljer og find vej.`}
+      accessibilityLabel={`${item.title}. Hele dagen.`}
+      accessibilityHint="Åbner detaljer og find vej"
+      hitSlop={8}
     >
       <Text style={Styles.miniTitle}>{item.title}</Text>
       <View style={Styles.miniMetaRow}>
@@ -242,17 +253,26 @@ export default function Program({ navigation }) {
   );
 
   const Empty = ({ label }) => (
-    <View style={Styles.emptyWrap} accessible accessibilityLabel="Ingen aktiviteter fundet">
+    <View
+      style={Styles.emptyWrap}
+      accessibilityRole="status"
+      accessibilityLabel={`Ingen ${label}`}
+    >
       <Text style={Styles.emptyTitle}>Ingen {label}</Text>
       <Text style={Styles.emptySub}>Prøv at fjerne filtre eller kig forbi Info-teltet.</Text>
     </View>
   );
 
+  const listCount =
+    tab === "schedule" ? filteredItems.length : allDayActivities.length;
+
   return (
     <SafeAreaView style={Styles.container} edges={["top", "left", "right"]}>
       <View style={Styles.container}>
         <View style={Styles.header}>
-          <Text style={Styles.pageTitle}>Dagens program</Text>
+          <Text style={Styles.pageTitle} accessibilityRole="header">
+            Dagens program
+          </Text>
           <Text style={Styles.sub}>
             {niceDate} • Åbent {fmtHM(open)}–{fmtHM(close)}
           </Text>
@@ -262,8 +282,11 @@ export default function Program({ navigation }) {
           <Pressable
             accessibilityRole="tab"
             accessibilityState={{ selected: tab === "schedule" }}
+            accessibilityLabel="Tidsplan"
+            accessibilityHint="Viser planlagte aktiviteter i tidsrækkefølge"
             onPress={() => setTab("schedule")}
             style={[Styles.segmentBtn, tab === "schedule" && Styles.segmentBtnActive]}
+            hitSlop={8}
           >
             <Text style={[Styles.segmentLabel, tab === "schedule" && Styles.segmentLabelActive]}>
               Tidsplan
@@ -272,8 +295,11 @@ export default function Program({ navigation }) {
           <Pressable
             accessibilityRole="tab"
             accessibilityState={{ selected: tab === "allday" }}
+            accessibilityLabel="Aktiviteter hele dagen"
+            accessibilityHint="Viser aktiviteter, der kører hele dagen"
             onPress={() => setTab("allday")}
             style={[Styles.segmentBtn, tab === "allday" && Styles.segmentBtnActive]}
+            hitSlop={8}
           >
             <Text style={[Styles.segmentLabel, tab === "allday" && Styles.segmentLabelActive]}>
               Aktiviteter hele dagen
@@ -289,7 +315,8 @@ export default function Program({ navigation }) {
               renderItem={renderScheduled}
               contentContainerStyle={{ paddingBottom: 16 }}
               ListEmptyComponent={<Empty label="planlagte aktiviteter" />}
-              accessibilityLabel="Liste over planlagte aktiviteter"
+              accessibilityRole="list"
+              accessibilityLabel={`Liste over planlagte aktiviteter. ${listCount} elementer.`}
             />
           ) : (
             <FlatList
@@ -298,7 +325,8 @@ export default function Program({ navigation }) {
               renderItem={renderAllDay}
               contentContainerStyle={{ paddingBottom: 24 }}
               ListEmptyComponent={<Empty label="heldagsaktiviteter" />}
-              accessibilityLabel="Liste over heldagsaktiviteter"
+              accessibilityRole="list"
+              accessibilityLabel={`Liste over heldagsaktiviteter. ${listCount} elementer.`}
             />
           )}
         </View>
