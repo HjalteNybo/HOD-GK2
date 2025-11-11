@@ -6,33 +6,27 @@ import { db } from '../Firebase/FirebaseApp';
 import s from '../Styles/GalleriStyles';
 
 const COLS = 3;
-const GAP = 6; 
+const GAP = 6;
 
-// Komponent der viser et galleri af billeder og videoer hentet fra Firestore
 export default function Galleri({ navigation }) {
-  const [items, setItems] = useState(null);   
+  const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
 
-  // Breddeberegning: vi har (COLS - 1) mellemrum imellem + 2 * padding ved kanter
-  // Vi bruger margin = GAP/2 pr. tile, så samlet imellem tiles bliver = GAP.
+  // Breddeberegning
   const size = useMemo(() => {
     const w = Dimensions.get('window').width;
-    const pad = GAP * (COLS + 1); // (COLS - 1) mellemrum + venstre og højre kant
+    const pad = GAP * (COLS + 1);
     return Math.floor((w - pad) / COLS);
   }, []);
 
-  // Henter galleri-items fra Firestore ved komponent-mount
+  // Hent galleri
   useEffect(() => {
-    const q = query(
-      collection(db, 'media'),
-      orderBy('uploadedAt', 'desc'),
-      limit(60)
-    );
+    const q = query(collection(db, 'media'), orderBy('uploadedAt', 'desc'), limit(60));
     const unsub = onSnapshot(
       q,
       (snap) => {
         const list = snap.docs
-          .map(d => {
+          .map((d) => {
             const data = d.data() || {};
             const ts = data.uploadedAt;
             return {
@@ -45,7 +39,7 @@ export default function Galleri({ navigation }) {
               visible: data.visible !== false,
             };
           })
-          .filter(x => x.visible && x.downloadURL);
+          .filter((x) => x.visible && x.downloadURL);
         setItems(list);
         setError(null);
       },
@@ -57,7 +51,7 @@ export default function Galleri({ navigation }) {
     return () => unsub();
   }, []);
 
-  // Håndterer forskellige tilstande: loading, fejl, tomt galleri
+  // Tilstande
   if (items === null) {
     return (
       <SafeAreaView style={s.container} edges={['top', 'left', 'right']}>
@@ -89,32 +83,44 @@ export default function Galleri({ navigation }) {
     );
   }
 
+  // A11y-label for hver tile
+  const getTileLabel = (item, index) => {
+    const kind = item.type === 'video' ? 'Video' : 'Billede';
+    const pos = `${index + 1} af ${items.length}`;
+    return item.caption
+      ? `${kind}. ${item.caption}. ${pos}. Åbner i fuld skærm.`
+      : `${kind}. ${pos}. Åbner i fuld skærm.`;
+  };
+
   const renderItem = ({ item, index }) => (
     <Pressable
       onPress={() =>
         navigation.navigate('MediaViewer', {
-          items,           // hele listen (du loader max 60 – helt fint)
-          startIndex: index
+          items,
+          startIndex: index,
         })
       }
-      style={[s.tile, { width: size, height: size, margin: GAP / 2 }]} // ← halv margin
+      style={[s.tile, { width: size, height: size, margin: GAP / 2 }]}
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={getTileLabel(item, index)}
+      accessibilityHint="Åbner i fuld skærm"
+      hitSlop={8}
     >
       <Image
         source={{ uri: item.downloadURL }}
         style={s.image}
         resizeMode="cover"
-        accessible
-        accessibilityLabel={item.caption || (item.type === 'video' ? 'Video' : 'Billede')}
+        accessible={false} // undgå dobbelt fokus; Pressable har label
       />
-      {item.type === 'video' && (
+      {item.type === 'video' ? (
         <View style={s.videoBadge}>
           <Text style={s.videoBadgeText}>▶︎</Text>
         </View>
-      )}
+      ) : null}
     </Pressable>
   );
 
-  // Returnerer hovedlayoutet med et grid af galleri-items
   return (
     <SafeAreaView style={s.container} edges={['top', 'left', 'right']}>
       <FlatList
@@ -122,11 +128,14 @@ export default function Galleri({ navigation }) {
         keyExtractor={(it) => it.id}
         renderItem={renderItem}
         numColumns={COLS}
-        contentContainerStyle={[s.gridContent, { paddingHorizontal: GAP }]} // ← kant-indrykning
+        contentContainerStyle={[s.gridContent, { paddingHorizontal: GAP }]}
         removeClippedSubviews
         initialNumToRender={18}
         windowSize={10}
         showsVerticalScrollIndicator={false}
+        accessible
+        accessibilityRole="list"
+        accessibilityLabel={`Galleri med ${items.length} elementer`}
       />
     </SafeAreaView>
   );

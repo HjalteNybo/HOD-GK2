@@ -4,11 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from '../Styles/HomeStyles';
 import { getFirestore, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 
-
 //finder datoen for “sidste torsdag i august” i et givent år
 function getFestivalDate(year) {
-  const augustFirst = new Date(year, 7, 1); 
-  const day = augustFirst.getDay(); 
+  const augustFirst = new Date(year, 7, 1);
+  const day = augustFirst.getDay();
   const offsetToThursday = (4 - day + 7) % 7;
   const firstThursday = new Date(augustFirst);
   firstThursday.setDate(augustFirst.getDate() + offsetToThursday);
@@ -52,6 +51,24 @@ const CONTACTS = [
   { name: 'Jonas', phone: '88888888' },
   { name: 'Info-teltet', phone: '88888888' },
 ];
+
+// Mailto med body-template
+function buildSignupMailto(niceDate) {
+  const subject = `Tilmelding til Håb & Drømme Festival`;
+  const body = [
+    `Hej Håb & Drømme-team,`,
+    ``,
+    `Jeg vil gerne tilmelde mig Håb & Drømme Festival ${niceDate}.`,
+    ``,
+    `Navn:`,
+    `Telefon:`,
+    `Antal ledsagere:`,
+    `Særlige hensyn/tilgængelighed:`,
+    ``,
+    `På forhånd tak!`,
+  ].join('\n');
+  return `mailto:${SIGNUP_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 export default function Home({ navigation }) {
   // Find næste festivaldato dynamisk
@@ -117,9 +134,21 @@ useEffect(() => {
     return () => clearInterval(id);
   }, [festivalOpen]);
 
+  // Én indledende annoncering (ingen hvert sekund)
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.('Nedtælling til Håb & Drømme Festivalen.');
   }, []);
+
+  // Kun D/H/M til skærmlæser (ingen sekunder)
+  const a11yCountdownLabel = useMemo(() => {
+    const d = timeLeft.days;
+    const h = timeLeft.hours;
+    const m = timeLeft.minutes;
+    const dWord = d === 1 ? 'dag' : 'dage';
+    const hWord = h === 1 ? 'time' : 'timer';
+    const mWord = m === 1 ? 'minut' : 'minutter';
+    return `${d} ${dWord}, ${h} ${hWord} og ${m} ${mWord}`;
+  }, [timeLeft.days, timeLeft.hours, timeLeft.minutes]);
 
   //tjekker om vi er før/under/efter festivaldagen ud fra nuværende tid
   const { isBeforeDay, isFestivalDay } = getDayState(now, festivalOpen, festivalClose);
@@ -139,11 +168,11 @@ if (isFestivalDay && events.length) {
   const niceDate = festivalDate.toLocaleDateString('da-DK', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   });
-  
+
   const [changes, setChanges] = useState([]);
 
   useEffect(() => {
-    const db = getFirestore(); // bruger default app (du har den allerede igang til storage)
+    const db = getFirestore();
     // Vis kun aktive ændringer, nyeste først
     const q = query(
       collection(db, 'programChanges'),
@@ -158,47 +187,59 @@ if (isFestivalDay && events.length) {
 
   //header, nedtælling/“i dag”, ændringer, beskrivelse, genveje og kontakt
   return (
-    <SafeAreaView style={Styles.container} edges={['top']}>
-    <ScrollView
-      style={Styles.container}
-      contentContainerStyle={Styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={Styles.header}>
-        <Text style={Styles.title}>Håb & Drømme Festival</Text>
-        <View style={Styles.accentBar} />
-      </View>
+    <SafeAreaView style={Styles.container} edges={['top', 'bottom']}>
+      {/* Scroll-fix til Android */}
+      <ScrollView
+        contentContainerStyle={Styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={Styles.header}>
+          <Text style={Styles.title} accessibilityRole="header">
+            Håb & Drømme Festival
+          </Text>
+          <View style={Styles.accentBar} />
+        </View>
 
-      <Text style={Styles.dateText}>
-        Sidste torsdag i august — {niceDate}
-      </Text>
+        <Text style={Styles.dateText}>
+          Sidste torsdag i august — {niceDate}
+        </Text>
 
-      {isBeforeDay && (
-        <>
-          <Text style={Styles.countdownIntro}>Vi ses om</Text>
-          <View style={Styles.countdownCard} accessible accessibilityRole="timer" accessibilityLabel="Nedtælling til festivalstart">
-            <View style={Styles.countdownRow}>
-              <View style={Styles.timeBlock}>
-                <Text style={Styles.timeNumber}>{timeLeft.days}</Text>
-                <Text style={Styles.timeLabel}>Dage</Text>
-              </View>
-              <View style={Styles.timeBlock}>
-                <Text style={Styles.timeNumber}>{timeLeft.hours}</Text>
-                <Text style={Styles.timeLabel}>Timer</Text>
-              </View>
-              <View style={Styles.timeBlock}>
-                <Text style={Styles.timeNumber}>{timeLeft.minutes}</Text>
-                <Text style={Styles.timeLabel}>Min</Text>
-              </View>
-              <View style={Styles.timeBlock}>
-                <Text style={Styles.timeNumber}>{timeLeft.seconds}</Text>
-                <Text style={Styles.timeLabel}>Sek</Text>
+        {isBeforeDay && (
+          <>
+            <Text style={Styles.countdownIntro}>Vi ses om</Text>
+            <View
+              style={Styles.countdownCard}
+              accessible
+              accessibilityLabel={`Nedtælling til festivalstart: ${a11yCountdownLabel}`}
+              accessibilityLiveRegion="none"
+            >
+              {/* Skjul de dynamiske tal for skærmlæseren, så kun label oplæses */}
+              <View
+                style={Styles.countdownRow}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                <View style={Styles.timeBlock}>
+                  <Text style={Styles.timeNumber}>{timeLeft.days}</Text>
+                  <Text style={Styles.timeLabel}>Dage</Text>
+                </View>
+                <View style={Styles.timeBlock}>
+                  <Text style={Styles.timeNumber}>{timeLeft.hours}</Text>
+                  <Text style={Styles.timeLabel}>Timer</Text>
+                </View>
+                <View style={Styles.timeBlock}>
+                  <Text style={Styles.timeNumber}>{timeLeft.minutes}</Text>
+                  <Text style={Styles.timeLabel}>Min</Text>
+                </View>
+                <View style={Styles.timeBlock}>
+                  <Text style={Styles.timeNumber}>{timeLeft.seconds}</Text>
+                  <Text style={Styles.timeLabel}>Sek</Text>
+                </View>
               </View>
             </View>
-          </View>
-        </>
-      )}
+          </>
+        )}
 
       {isFestivalDay && (
   <View style={Styles.todayCard}>
@@ -224,49 +265,43 @@ if (isFestivalDay && events.length) {
   </View>
 )}
 
-      {changes.length > 0 && (
-    <View style={Styles.alertCard} accessibilityLabel="Vigtige ændringer">
-     {changes.map((c) => (
-      <Text key={c.id} style={Styles.alertText}>{c.text}</Text>
-     ))}
-   </View>
-    )}
-      <View style={Styles.quickRow} accessible accessibilityRole="menu">
-        <Pressable
-          style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Program')}
-          accessibilityRole="button"
-          accessibilityLabel="Se programmet"
-        >
-        <Text style={Styles.quickButtonText}>Program</Text>
-        </Pressable>
+        {/* Tilmelding / billet-info */}
+        <View style={Styles.signupCard} accessibilityLabel="Tilmelding til festival">
+          <Text style={Styles.signupTitle}>Har du ikke billet endnu?</Text>
+          <Text style={Styles.signupText}>
+            Meld dig til ved at ringe på {SIGNUP_PHONE.replace(/(\d{2})(?=\d)/g, '$1 ')} eller skrive en mail til {SIGNUP_EMAIL}.
+          </Text>
 
-        <Pressable
-          style={({ pressed }) => [Styles.quickButtonOrange, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Galleri')} 
-          accessibilityRole="button"
-          accessibilityLabel="Åbn galleri"
-        >
-          <Text style={Styles.quickButtonTextLight}>Galleri</Text>
-        </Pressable>
+          <View style={Styles.signupRow}>
+            <Pressable
+              onPress={() => Linking.openURL(`tel:${SIGNUP_PHONE}`)}
+              accessibilityRole="link"
+              accessibilityLabel={`Ring ${SIGNUP_PHONE.replace(/(\d{2})(?=\d)/g, '$1 ')}`}
+              accessibilityHint="Åbner telefonopkald"
+              style={({ pressed }) => [Styles.signupButton, pressed && Styles.signupButtonPressed]}
+              hitSlop={8}
+            >
+              <Text style={Styles.signupButtonText}>Ring</Text>
+            </Pressable>
 
-        <Pressable
-          style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Pladsen')} 
-          accessibilityRole="button"
-          accessibilityLabel="Åbn kort"
-        >
-          <Text style={Styles.quickButtonText}>Kort</Text>
-        </Pressable>
-      </View>
+            <Pressable
+              onPress={() => Linking.openURL(buildSignupMailto(niceDate))}
+              accessibilityRole="link"
+              accessibilityLabel={`Skriv mail til ${SIGNUP_EMAIL}`}
+              accessibilityHint="Åbner din mailapp med en udfyldt tilmeldingsskabelon"
+              style={({ pressed }) => [Styles.signupButtonAlt, pressed && Styles.signupButtonPressed]}
+              hitSlop={8}
+            >
+              <Text style={Styles.signupButtonText}>Skriv mail</Text>
+            </Pressable>
+          </View>
+        </View>
 
-{/* Tilmelding / billet-info */}
-<View style={Styles.signupCard} accessible accessibilityRole="summary" accessibilityLabel="Tilmelding til festival">
-  <Text style={Styles.signupTitle}>Har du ikke billet endnu?</Text>
-  <Text style={Styles.signupText}>
-    Meld dig til ved at ringe på {SIGNUP_PHONE.replace(/(\d{2})(?=\d)/g, '$1 ')}{" "}
-    eller skrive en mail til {SIGNUP_EMAIL}.
-  </Text>
+        <View style={Styles.helpCard}>
+          <View style={Styles.helpHeaderRow}>
+            <Text style={Styles.helpTitle}>Har du brug for hjælp?</Text>
+            <Text style={Styles.helpSub}>Ring til en pædagog</Text>
+          </View>
 
   <View style={Styles.signupRow}>
     <Pressable

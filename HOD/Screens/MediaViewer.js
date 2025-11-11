@@ -1,16 +1,29 @@
 import React, {
-  useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect,
-} from 'react';
-import { View, Text, FlatList, Image, Dimensions, ActivityIndicator } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { VideoView, useVideoPlayer } from 'expo-video';
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+} from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  Dimensions,
+  ActivityIndicator,
+  Platform,
+} from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { VideoView, useVideoPlayer } from "expo-video";
 import styles from "../Styles/MedieViewerStyles";
 
-// Komponent til at vise billeder og videoer i fuld skærm med swipe-navigation
+// Én slide (billede eller video)
 function Slide({ item, isActive, containerW, containerH }) {
-  const isVideo = item?.type === 'video';
+  const isVideo = item && item.type === "video";
 
-  const [ratio, setRatio] = useState(null); 
+  const [ratio, setRatio] = useState(null);
   const isPortrait = useMemo(() => (ratio ? ratio < 1 : false), [ratio]);
 
   useEffect(() => {
@@ -23,46 +36,77 @@ function Slide({ item, isActive, containerW, containerH }) {
     }
   }, [isVideo, item?.downloadURL]);
 
-// Beregn højde på medieboks baseret på skærmorientering
   const PORTRAIT_FRAC = 0.82;
   const LANDSCAPE_FRAC = 0.72;
-// Brug mindre højde hvis vi ikke kender billedets aspektforhold endnu
-  const boxH = Math.round(containerH * (isPortrait ? PORTRAIT_FRAC : LANDSCAPE_FRAC));
+  const boxH = Math.round(
+    containerH * (isPortrait ? PORTRAIT_FRAC : LANDSCAPE_FRAC)
+  );
 
-  // Opsæt videoafspiller hvis det er en video
-  const player = useVideoPlayer(isVideo ? item.downloadURL : null, (p) => {
+  // Video player
+  const player = useVideoPlayer(isVideo ? item?.downloadURL : null, (p) => {
     if (isActive) p.play();
   });
+
   useEffect(() => {
     if (!isVideo || !player) return;
-    if (isActive) player.play(); else player.pause();
+    if (isActive) player.play();
+    else player.pause();
   }, [isActive, isVideo, player]);
 
+  // Skjul ikke-aktiv slide for A11Y, så skærmlæser ikke oplæser alt
+  const a11yHiddenProps = isActive
+    ? {}
+    : {
+        accessibilityElementsHidden: true,
+        importantForAccessibility:
+          Platform.OS === "android" ? "no-hide-descendants" : "no-hide-descendants",
+      };
+
   return (
-    <View style={[styles.slide, { width: containerW, height: containerH }]}>
-      <View style={{ width: containerW, height: boxH, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={[styles.slide, { width: containerW, height: containerH }]}
+      {...a11yHiddenProps}
+    >
+      <View
+        style={{
+          width: containerW,
+          height: boxH,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         {isVideo ? (
-          <VideoView
-            style={{ width: '100%', height: '100%' }}
-            player={player}
-            allowsFullscreen
-            allowsPictureInPicture
-            contentFit="contain"
-          />
+          // Pak VideoView ind i en container med label
+          <View
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={item?.caption ? `${item.caption} (video)` : "Video"}
+            style={{ width: "100%", height: "100%" }}
+          >
+            <VideoView
+              style={{ width: "100%", height: "100%" }}
+              player={player}
+              allowsFullscreen
+              allowsPictureInPicture
+              contentFit="contain"
+            />
+          </View>
         ) : (
           <Image
-            source={{ uri: item.downloadURL }}
-            style={{ width: '100%', height: '100%' }}
+            source={{ uri: item?.downloadURL }}
+            style={{ width: "100%", height: "100%" }}
             resizeMode="contain"
             accessible
-            accessibilityLabel={item.caption || 'Billede'}
+            accessibilityRole="image"
+            accessibilityLabel={item?.caption || "Billede"}
           />
         )}
       </View>
     </View>
   );
 }
-// Hovedkomponent for medievisning med swipe-navigation
+
+// Hovedkomponent
 export default function MediaViewer({ route, navigation }) {
   const insets = useSafeAreaInsets();
 
@@ -81,8 +125,7 @@ export default function MediaViewer({ route, navigation }) {
   );
 
   const flatRef = useRef(null);
-  const { width: screenW, height: screenH } = Dimensions.get('window');
-
+  const { width: screenW, height: screenH } = Dimensions.get("window");
   const [viewerH, setViewerH] = useState(0);
 
   const getItemLayout = useCallback(
@@ -92,17 +135,22 @@ export default function MediaViewer({ route, navigation }) {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: items.length ? `${index + 1} / ${items.length}` : 'Galleri',
+      title: items.length ? `${index + 1} / ${items.length}` : "Galleri",
       headerLargeTitle: false,
-      headerTintColor: '#fff',
-      headerStyle: { backgroundColor: '#000' },
+      headerTintColor: "#fff",
+      headerStyle: { backgroundColor: "#000" },
     });
   }, [index, items.length, navigation]);
 
-  const viewabilityConfig = useMemo(() => ({ itemVisiblePercentThreshold: 50 }), []);
+  const viewabilityConfig = useMemo(
+    () => ({ itemVisiblePercentThreshold: 50 }),
+    []
+  );
+
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
     if (viewableItems?.length) {
-      setIndex(viewableItems[0].index ?? 0);
+      const next = viewableItems[0].index ?? 0;
+      if (typeof next === "number" && next !== index) setIndex(next);
     }
   });
 
@@ -116,19 +164,23 @@ export default function MediaViewer({ route, navigation }) {
     return (
       <SafeAreaView style={styles.center}>
         <ActivityIndicator />
-        <Text style={{ marginTop: 8, color: '#fff' }}>Indlæser…</Text>
+        <Text style={{ marginTop: 8, color: "#fff" }}>Indlæser…</Text>
       </SafeAreaView>
     );
   }
 
-  // Vis det aktuelle medie og dets metadata
   const current = items[index] || {};
   const dateStr = current.uploadedAtMillis
     ? new Date(current.uploadedAtMillis).toLocaleString()
-    : '';
+    : "";
 
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView
+      style={styles.root}
+      edges={["top", "left", "right", "bottom"]}
+      accessible
+      accessibilityLabel="Medievisning. Stryg vandret for at skifte billede eller video."
+    >
       <View
         style={styles.swiperArea}
         onLayout={(e) => setViewerH(e.nativeEvent.layout.height)}
@@ -136,7 +188,7 @@ export default function MediaViewer({ route, navigation }) {
         <FlatList
           ref={flatRef}
           data={items}
-          keyExtractor={(it) => it.id}
+          keyExtractor={(it, i) => String(it?.id ?? i)}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
@@ -145,7 +197,7 @@ export default function MediaViewer({ route, navigation }) {
               item={item}
               isActive={i === index}
               containerW={screenW}
-              containerH={viewerH || screenH} 
+              containerH={viewerH || screenH}
             />
           )}
           initialScrollIndex={index}
@@ -155,14 +207,23 @@ export default function MediaViewer({ route, navigation }) {
           windowSize={3}
           viewabilityConfig={viewabilityConfig}
           onViewableItemsChanged={onViewableItemsChanged.current}
+          accessibilityRole="list"
+          accessibilityLabel={`Galleri med ${items.length} elementer`}
         />
       </View>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+      <View
+        style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 8) }]}
+        accessible
+        accessibilityRole="summary"
+        accessibilityLabel="Mediedetaljer"
+      >
         {!!current.caption && <Text style={styles.caption}>{current.caption}</Text>}
         <Text style={styles.meta}>
-          {current.uploadedByEmail ? `Uploadet af ${current.uploadedByEmail}` : 'Uploadet'}
-          {dateStr ? ` — ${dateStr}` : ''}
+          {current.uploadedByEmail
+            ? `Uploadet af ${current.uploadedByEmail}`
+            : "Uploadet"}
+          {dateStr ? ` — ${dateStr}` : ""}
         </Text>
       </View>
     </SafeAreaView>
