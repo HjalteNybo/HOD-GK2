@@ -1,13 +1,23 @@
-import React, { useMemo, useState } from "react";
-import { View, Text, FlatList, Pressable } from "react-native";
+import React, { useMemo, useState, useEffect } from "react";
+import { View, Text, FlatList, Pressable, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Styles from "../Styles/ProgramStyles";
 import { useRoute } from "@react-navigation/native";
+import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  getFirestore,
+  collection,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+} from "firebase/firestore";
 
 // Festivaldato = 4 uger efter første torsdag i august
 function getFestivalDate(year) {
   const augustFirst = new Date(year, 7, 1);
-  const day = augustFirst.getDay(); 
+  const day = augustFirst.getDay();
   const offsetToThursday = (4 - day + 7) % 7;
   const firstThursday = new Date(augustFirst);
   firstThursday.setDate(augustFirst.getDate() + offsetToThursday);
@@ -58,6 +68,37 @@ const allDayActivities = [
   { id: "d6", title: "Håb & Drømme-bod", type: "allDay", description: "Skriv dine håb og drømme – vi hænger dem op." },
 ];
 
+// -------- Notifikations-hjælpere (program-opdateret) --------
+const PROGRAM_UPDATE_KEY = "program:lastChangeId";
+const PROGRAM_NOTIFY_THROTTLE_KEY = "program:lastNotifiedAtMs";
+const THROTTLE_MINUTES = 10; // undgå spam – justér efter behov
+
+async function ensureNotifPermissionAndChannel() {
+  const existing = await Notifications.getPermissionsAsync();
+  let granted =
+    existing.granted || existing.ios?.status === Notifications.IosAuthorizationStatus.AUTHORIZED;
+  if (!granted) {
+    const req = await Notifications.requestPermissionsAsync();
+    granted = req.granted || req.ios?.status === Notifications.IosAuthorizationStatus.AUTHORIZED;
+  }
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("program-updates", {
+      name: "Programopdateringer",
+      importance: Notifications.AndroidImportance.DEFAULT,
+    });
+  }
+  return granted;
+}
+async function throttled() {
+  const now = Date.now();
+  const raw = await AsyncStorage.getItem(PROGRAM_NOTIFY_THROTTLE_KEY);
+  const last = raw ? parseInt(raw, 10) : 0;
+  const diffMin = (now - last) / 60000;
+  if (diffMin < THROTTLE_MINUTES) return true;
+  await AsyncStorage.setItem(PROGRAM_NOTIFY_THROTTLE_KEY, String(now));
+  return false;
+}
+
 // Hovedkomponent for program-skærmen
 export default function Program({ navigation }) {
   const now = new Date();
@@ -65,6 +106,7 @@ export default function Program({ navigation }) {
   const boothId = route?.params?.boothId || null;
 
   const [tab, setTab] = useState("schedule"); 
+  const db = getFirestore();
 
   const festivalDate = useMemo(() => {
     const thisYear = getFestivalDate(now.getFullYear());
@@ -97,6 +139,58 @@ export default function Program({ navigation }) {
     year: "numeric",
   });
 
+  // --- Lyt efter admin-ændringer i programmet og vis én notifikation ---
+  useEffect(() => {
+    const q = query(
+      collection(db, "programChanges"),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
+
+    const unsub = onSnapshot(q, async (snap) => {
+      const doc = snap.docs[0];
+      if (!doc) return;
+
+      const lastId = await AsyncStorage.getItem(PROGRAM_UPDATE_KEY);
+      if (lastId === doc.id) return; // samme ændring som sidst → ignorér
+
+      // gem nyeste id så vi ikke duplikerer
+      await AsyncStorage.setItem(PROGRAM_UPDATE_KEY, doc.id);
+
+      // undgå spam
+      if (await throttled()) return;
+
+      // tilladelse + kanal
+      const ok = await ensureNotifPermissionAndChannel();
+      if (!ok) return;
+
+      const data = doc.data() || {};
+      const body = data.text ? String(data.text).slice(0, 140) : "Tjek dagens program i appen.";
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Program opdateret",
+          body,
+          data: { type: "program_updated", changeId: doc.id },
+        },
+        trigger: null, // vis nu
+      });
+    });
+
+    return () => unsub();
+  }, [db]);
+
+  // ---------- TEST-NOTIFIKATION (vises straks ved app-start) ----------
+  useEffect(() => {
+    (async () => {
+      await Notifications.requestPermissionsAsync();
+      await Notifications.scheduleNotificationAsync({
+        content: { title: "Test", body: "Lokale notifikationer virker ✅" },
+        trigger: null, // vis nu
+      });
+    })();
+  }, []);
+  
   // Funktion der renderer hver planlagt aktivitet som et trykbart kort med tid, titel og sted
   const renderScheduled = ({ item }) => {
     const isNow = isFestivalDay && now >= item.start && now < item.end;
