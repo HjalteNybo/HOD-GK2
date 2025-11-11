@@ -180,17 +180,6 @@ export default function Program({ navigation }) {
     return () => unsub();
   }, [db]);
 
-  // ---------- TEST-NOTIFIKATION (vises straks ved app-start) ----------
-  useEffect(() => {
-    (async () => {
-      await Notifications.requestPermissionsAsync();
-      await Notifications.scheduleNotificationAsync({
-        content: { title: "Test", body: "Lokale notifikationer virker ✅" },
-        trigger: null, // vis nu
-      });
-    })();
-  }, []);
-  
   // Funktion der renderer hver planlagt aktivitet som et trykbart kort med tid, titel og sted
   const renderScheduled = ({ item }) => {
     const isNow = isFestivalDay && now >= item.start && now < item.end;
