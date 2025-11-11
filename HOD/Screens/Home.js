@@ -297,35 +297,6 @@ if (isFestivalDay && events.length) {
           </View>
         </View>
 
-        <View style={Styles.helpCard}>
-          <View style={Styles.helpHeaderRow}>
-            <Text style={Styles.helpTitle}>Har du brug for hjælp?</Text>
-            <Text style={Styles.helpSub}>Ring til en pædagog</Text>
-          </View>
-
-  <View style={Styles.signupRow}>
-    <Pressable
-      onPress={() => Linking.openURL(`tel:${SIGNUP_PHONE}`)}
-      accessibilityRole="button"
-      accessibilityLabel={`Ring ${SIGNUP_PHONE}`}
-      style={({ pressed }) => [Styles.signupButton, pressed && Styles.signupButtonPressed]}
-    >
-      <Text style={Styles.signupButtonText}>Ring</Text>
-    </Pressable>
-
-    <Pressable
-      onPress={() => Linking.openURL(
-        `mailto:${SIGNUP_EMAIL}?subject=Tilmelding%20til%20H%C3%A5b%20%26%20Dr%C3%B8mme%20Festival`
-      )}
-      accessibilityRole="button"
-      accessibilityLabel={`Skriv mail til ${SIGNUP_EMAIL}`}
-      style={({ pressed }) => [Styles.signupButtonAlt, pressed && Styles.signupButtonPressed]}
-    >
-      <Text style={Styles.signupButtonText}>Skriv mail</Text>
-    </Pressable>
-  </View>
-</View>
-
      <View style={Styles.helpCard} accessible accessibilityRole="summary">
   <View style={Styles.helpHeaderRow}>
     <Text style={Styles.helpTitle}>Har du brug for hjælp?</Text>

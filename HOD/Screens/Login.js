@@ -23,7 +23,7 @@ export default function Login({ navigation }) {
       <View style={{ flex:1, padding:16, gap:12, justifyContent:'center' }}>
         <Text style={{ fontSize:18, fontWeight:'700' }}>Du er logget ind</Text>
         <Text>{user.email}</Text>
-        <Text>{isStaff ? 'Rolle: Personale (må uploade)' : 'Rolle: Bruger (ingen upload)'}</Text>
+        <Text>{isStaff ? 'Rolle: Personale' : 'Rolle: Bruger (ingen upload)'}</Text>
 
         {isStaff && (
           <Pressable

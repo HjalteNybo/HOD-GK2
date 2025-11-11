@@ -2,6 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
+import { Pressable, Text } from "react-native";
 import MediaViewer from '../Screens/MediaViewer';
 import Home from "../Screens/Home";
 import Program from "../Screens/Program";
@@ -44,11 +45,69 @@ function GalleryStack() {
 function PersonaleStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="StaffLogin" component={Login} />
-      <Stack.Screen name="Upload" component={Upload} />
-      <Stack.Screen name="MediaViewer" component={MediaViewer} options={{ headerShown: true, headerTransparent: false, headerTintColor: '#fff', headerStyle: { backgroundColor: '#000' } }} />
-      <Stack.Screen name="ProgramChanges" component={ProgramChanges} options={{ title: 'Programændringer' }} />
+      {/* Ingen header på Personale (login) */}
+      <Stack.Screen
+        name="StaffLogin"
+        component={Login}
+        options={{ headerShown: false }}
+      />
+
+      {/* Upload: header med tilbage-knap */}
+      <Stack.Screen
+        name="Upload"
+        component={Upload}
+        options={({ navigation }) => ({
+          headerShown: true,
+          title: "Upload filer",
+          headerStyle: { backgroundColor: "#3E6B39" },
+          headerTintColor: "#fff",
+          headerTitleStyle: { color: "#fff" },
+          headerLeft: () => <BackToPersonale navigation={navigation} />,
+          headerLeftContainerStyle: { paddingLeft: 8 },
+        })}
+      />
+
+      {/* Programændringer: header med tilbage-knap */}
+      <Stack.Screen
+        name="ProgramChanges"
+        component={ProgramChanges}
+        options={({ navigation }) => ({
+          headerShown: true,
+          title: "Ændringer i program",
+          headerStyle: { backgroundColor: "#3E6B39" },
+          headerTintColor: "#fff",
+          headerTitleStyle: { color: "#fff" },
+          headerLeft: () => <BackToPersonale navigation={navigation} />,
+          headerLeftContainerStyle: { paddingLeft: 8 },
+        })}
+      />
+
+      {/* (valgfrit) MediaViewer med sort header */}
+      <Stack.Screen
+        name="MediaViewer"
+        component={MediaViewer}
+        options={{
+          headerShown: true,
+          title: "Visning",
+          headerStyle: { backgroundColor: "#000" },
+          headerTintColor: "#fff",
+          headerTitleStyle: { color: "#fff" },
+        }}
+      />
     </Stack.Navigator>
+  );
+}
+
+function BackToPersonale({ navigation }) {
+  const goBackToStaff = () => {
+    if (navigation.canGoBack()) navigation.goBack();
+    else navigation.navigate("StaffLogin"); // ⬅️ var "Login"
+  };
+  return (
+    <Pressable onPress={goBackToStaff} style={{ flexDirection:"row", alignItems:"center" }} hitSlop={8}>
+      <Ionicons name="chevron-back" size={22} color="#fff" />
+      <Text style={{ color:"#fff", fontWeight:"600" }}>Tilbage</Text>
+    </Pressable>
   );
 }
 

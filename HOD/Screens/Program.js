@@ -291,7 +291,7 @@ export default function Program({ navigation }) {
   );
 
   const listCount =
-    tab === "schedule" ? filteredItems.length : allDayActivities.length;
+  tab === "schedule" ? filteredItems.length : allDay.length;
 
   return (
     <SafeAreaView style={Styles.container} edges={["top", "left", "right"]}>
