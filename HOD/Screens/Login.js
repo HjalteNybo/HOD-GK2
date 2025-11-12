@@ -29,7 +29,7 @@ export default function Login({ navigation }) {
           <Pressable
             onPress={() => navigation.navigate('Upload')}
             style={({pressed}) => [
-              { backgroundColor:'#F28C38', padding:12, borderRadius:10, alignItems:'center' },
+              { backgroundColor:'#3E6B39', padding:12, borderRadius:10, alignItems:'center' },
               pressed && { opacity:0.9 }
             ]}
             accessibilityLabel="Upload filer"
@@ -54,7 +54,7 @@ export default function Login({ navigation }) {
         <Pressable
           onPress={logout}
           style={({pressed}) => [
-            { backgroundColor:'#3E6B39', padding:12, borderRadius:10, alignItems:'center' },
+            { backgroundColor:'#ff0000ff', padding:12, borderRadius:10, alignItems:'center' },
             pressed && { opacity:0.9 }
           ]}
         >

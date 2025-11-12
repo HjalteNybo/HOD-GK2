@@ -45,7 +45,6 @@ function GalleryStack() {
 function PersonaleStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* Ingen header på Personale (login) */}
       <Stack.Screen
         name="StaffLogin"
         component={Login}
@@ -101,7 +100,7 @@ function PersonaleStack() {
 function BackToPersonale({ navigation }) {
   const goBackToStaff = () => {
     if (navigation.canGoBack()) navigation.goBack();
-    else navigation.navigate("StaffLogin"); // ⬅️ var "Login"
+    else navigation.navigate("StaffLogin"); 
   };
   return (
     <Pressable onPress={goBackToStaff} style={{ flexDirection:"row", alignItems:"center" }} hitSlop={8}>
@@ -124,8 +123,7 @@ export default function Navigator() {
           let icon = "home";
           if (route.name === "Home") icon = focused ? "home" : "home-outline";
           if (route.name === "Program") icon = focused ? "list" : "list-outline";
-          if (route.name === "Galleri") icon = focused ? "chatbubbles" : "chatbubbles-outline";
-          // NYE/OPDATERDE
+          if (route.name === "Galleri") icon = focused ? "images" : "images-outline";
           if (route.name === "Plads") icon = focused ? "map" : "map-outline";
           if (route.name === "Personale") icon = focused ? "lock-closed" : "lock-closed-outline";
           return <Ionicons name={icon} size={size} color={color} />;

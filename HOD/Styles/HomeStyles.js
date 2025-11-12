@@ -74,7 +74,7 @@ export default StyleSheet.create({
     color: Colors.text,
   },
   todayCard: {
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.secondary,
     borderRadius: 16,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -338,7 +338,7 @@ signupButton: {
   justifyContent: 'center',
   paddingVertical: 10,
   borderRadius: 10,
-  backgroundColor: '#3E6B39', // grøn som i dine andre knapper
+  backgroundColor: '#3E6B39', 
 },
 signupButtonAlt: {
   flex: 1,
@@ -346,7 +346,7 @@ signupButtonAlt: {
   justifyContent: 'center',
   paddingVertical: 10,
   borderRadius: 10,
-  backgroundColor: '#F28C38', // orange
+  backgroundColor: '#F28C38', 
 },
 signupButtonText: {
   color: '#fff',
@@ -354,5 +354,119 @@ signupButtonText: {
 },
 signupButtonPressed: {
   opacity: 0.9,
+},
+todayHeaderRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 8,
+},
+
+nowPill: {
+  backgroundColor: '#2E7D32', 
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+  borderRadius: 999,
+},
+nowPillText: {
+  color: '#ffffffff',
+  fontWeight: '800',
+  fontSize: 12,
+  letterSpacing: 0.4,
+},
+
+eventTitleLarge: {
+  fontSize: 20,
+  fontWeight: '800',
+  color: '#1F2937',
+  marginBottom: 6,
+},
+
+metaRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+  marginBottom: 10,
+  flexWrap: 'wrap',
+},
+
+placeChip: {
+  backgroundColor: '#E3F2FD', 
+  color: '#0F4C81',
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+  borderRadius: 999,
+  fontWeight: '700',
+},
+timeRange: {
+  color: '#374151',
+  fontWeight: '600',
+},
+
+progressWrap: {
+  height: 8,
+  backgroundColor: '#E5E7EB',
+  borderRadius: 999,
+  overflow: 'hidden',
+},
+progressInner: {
+  height: '100%',
+  backgroundColor: '#4CAF50',
+  borderRadius: 999,
+},
+progressHint: {
+  marginTop: 6,
+  color: '#4B5563',
+  fontSize: 12,
+},
+
+nextRow: {
+  marginTop: 14,
+  paddingTop: 12,
+  borderTopWidth: 1,
+  borderTopColor: '#E5E7EB',
+  gap: 2,
+},
+nextLabel: {
+  color: '#6B7280',
+  fontSize: 12,
+  fontWeight: '700',
+  letterSpacing: 0.3,
+  textTransform: 'uppercase',
+},
+nextTitle: {
+  color: '#111827',
+  fontSize: 16,
+  fontWeight: '700',
+},
+nextWhen: {
+  color: '#374151',
+  fontSize: 13,
+},
+
+ctasRow: {
+  flexDirection: 'row',
+  gap: 10,
+  marginTop: 14,
+},
+ctaBtn: {
+  backgroundColor: '#3E6B39',
+  paddingHorizontal: 14,
+  paddingVertical: 10,
+  borderRadius: 10,
+},
+ctaText: {
+  color: '#fff',
+  fontWeight: '800',
+},
+ctaBtnAlt: {
+  backgroundColor: '#F3F4F6',
+  paddingHorizontal: 14,
+  paddingVertical: 10,
+  borderRadius: 10,
+},
+ctaTextAlt: {
+  color: '#111827',
+  fontWeight: '800',
 },
 });
