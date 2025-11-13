@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, AccessibilityInfo, Pressable, Linking } from 'react-native';
+import { View, Text, AccessibilityInfo, Pressable, Linking, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Styles from '../Styles/HomeStyles';
 import { getFirestore, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { Ionicons } from "@expo/vector-icons";
 
+// toggle til festival-mode for previewing "i dag"-tilstand
+const PREVIEW_FESTIVAL_MODE = false; // <-- sæt til false i prod
 
 //finder datoen for “sidste torsdag i august” i et givent år
 function getFestivalDate(year) {
-  const augustFirst = new Date(year, 7, 1); 
-  const day = augustFirst.getDay(); 
+  const augustFirst = new Date(year, 7, 1);
+  const day = augustFirst.getDay();
   const offsetToThursday = (4 - day + 7) % 7;
   const firstThursday = new Date(augustFirst);
   firstThursday.setDate(augustFirst.getDate() + offsetToThursday);
@@ -44,31 +46,28 @@ function getDayState(now, festStart, festEnd) {
   };
 }
 
-//det fastlagte dagsprogram med start/slut tider på festivaldatoen
-function buildProgram(festivalDate) {
-  const S = (t) => timeOnDate(festivalDate, t);
-  return [
-    { title: 'Velkomst ved borgerrådet og Henrik', start: S('10:00'), end: S('10:05'), place: 'Hovedområde' },
-    { title: 'Sunshine Band', start: S('10:05'), end: S('10:30'), place: 'Scene' },
-    { title: 'Yoga', start: S('10:30'), end: S('10:50'), place: 'Sanseområdet' },
-    { title: 'Karaoke', start: S('10:50'), end: S('12:00'), place: 'Telt A' },
-    { title: 'Pause', start: S('12:00'), end: S('12:30'), place: 'Fællesområde' },
-    { title: 'DJ Denner', start: S('12:30'), end: S('13:00'), place: 'Scene' },
-    { title: 'Karaoke', start: S('13:00'), end: S('14:00'), place: 'Telt A' },
-  ];
-}
-
-// liste over vigtige ændringer (vises kun hvis der er noget)
-
 
 // Kontakt (midlertidige numre)
 const SIGNUP_PHONE = '88888888';
 const SIGNUP_EMAIL = 'info@haabogdroemme.dk';
-const CONTACTS = [
-  { name: 'Anna', phone: '88888888' },
-  { name: 'Jonas', phone: '88888888' },
-  { name: 'Info-teltet', phone: '88888888' },
-];
+
+// Mailto med body-template
+function buildSignupMailto(niceDate) {
+  const subject = `Tilmelding til Håb & Drømme Festival`;
+  const body = [
+    `Hej Håb & Drømme-team,`,
+    ``,
+    `Jeg vil gerne tilmelde mig Håb & Drømme Festival ${niceDate}.`,
+    ``,
+    `Navn:`,
+    `Telefon:`,
+    `Antal ledsagere:`,
+    `Særlige hensyn/tilgængelighed:`,
+    ``,
+    `På forhånd tak!`,
+  ].join('\n');
+  return `mailto:${SIGNUP_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 export default function Home({ navigation }) {
   // Find næste festivaldato dynamisk
@@ -83,7 +82,32 @@ export default function Home({ navigation }) {
   const festivalClose = useMemo(() => timeOnDate(festivalDate, '14:00'), [festivalDate]);
 
   //program med konkrete datoer
-  const program = useMemo(() => buildProgram(festivalDate), [festivalDate]);
+const toDate = (t) => (t?.toDate ? t.toDate() : new Date(t));
+
+const dayStart = useMemo(
+  () => new Date(festivalDate.getFullYear(), festivalDate.getMonth(), festivalDate.getDate(), 0, 0, 0),
+  [festivalDate]
+);
+const nextDayStart = useMemo(
+  () => new Date(festivalDate.getFullYear(), festivalDate.getMonth(), festivalDate.getDate() + 1, 0, 0, 0),
+  [festivalDate]
+);
+
+const [events, setEvents] = useState([]);
+
+useEffect(() => {
+  const db = getFirestore();
+  const q = query(
+    collection(db, 'events'),
+    where('start', '>=', dayStart),
+    where('start', '<', nextDayStart),
+    orderBy('start', 'asc')
+  );
+  const unsub = onSnapshot(q, (snap) => {
+    setEvents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  }, (err) => console.warn('events listen error:', err));
+  return unsub;
+}, [dayStart, nextDayStart]);
 
   //udregner tid der er tilbage til åbningstid (bruges af nedtællingen)
   const getTimeLeft = () => {
@@ -102,40 +126,61 @@ export default function Home({ navigation }) {
 
   // Ticker der opdaterer nedtælling og “nu” hvert sekund
   useEffect(() => {
-    const id = setInterval(() => {
-      setTimeLeft(getTimeLeft());
+  const id = setInterval(() => {
+    if (PREVIEW_FESTIVAL_MODE) {
+      // Fast "midt på dagen" på festivaldatoen (kan ændres til fx '10:15')
+      setNow(timeOnDate(festivalDate, '15:00'));
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, done: true });
+    } else {
       setNow(new Date());
-    }, 1000);
-    return () => clearInterval(id);
-  }, [festivalOpen]);
+      setTimeLeft(getTimeLeft());
+    }
+  }, 1000);
+  return () => clearInterval(id);
+}, [festivalDate]);
 
+  // Én indledende annoncering
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.('Nedtælling til Håb & Drømme Festivalen.');
   }, []);
 
+  // Kun D/H/M til skærmlæser (ingen sekunder)
+  const a11yCountdownLabel = useMemo(() => {
+    const d = timeLeft.days;
+    const h = timeLeft.hours;
+    const m = timeLeft.minutes;
+    const dWord = d === 1 ? 'dag' : 'dage';
+    const hWord = h === 1 ? 'time' : 'timer';
+    const mWord = m === 1 ? 'minut' : 'minutter';
+    return `${d} ${dWord}, ${h} ${hWord} og ${m} ${mWord}`;
+  }, [timeLeft.days, timeLeft.hours, timeLeft.minutes]);
+
   //tjekker om vi er før/under/efter festivaldagen ud fra nuværende tid
   const { isBeforeDay, isFestivalDay } = getDayState(now, festivalOpen, festivalClose);
+  const showTodayCard = PREVIEW_FESTIVAL_MODE || isFestivalDay;
+  const PREVIEW_FORCE_HIDE_SIGNUP = false; // sæt til true KUN når du vil skjule tilmeldingskortet
+  const hideSignupCard = isFestivalDay || PREVIEW_FORCE_HIDE_SIGNUP;
 
   //finder igangværende aktivitet eller næste aktivitet i dag
   let nowOrNext = null;
-  if (isFestivalDay) {
-    const current = program.find(a => now >= a.start && now < a.end);
-    if (current) {
-      nowOrNext = { mode: 'now', item: current };
-    } else {
-      const upcoming = program.find(a => now < a.start);
-      if (upcoming) nowOrNext = { mode: 'next', item: upcoming };
-    }
+if (showTodayCard && events.length) {
+  const current = events.find(a => now >= toDate(a.start) && now < toDate(a.end));
+  if (current) {
+    nowOrNext = { mode: 'now', item: current };
+  } else {
+    const upcoming = events.find(a => now < toDate(a.start));
+    if (upcoming) nowOrNext = { mode: 'next', item: upcoming };
   }
+}
   //læsevenlig dato-tekst
   const niceDate = festivalDate.toLocaleDateString('da-DK', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   });
-  
+
   const [changes, setChanges] = useState([]);
 
   useEffect(() => {
-    const db = getFirestore(); // bruger default app (du har den allerede igang til storage)
+    const db = getFirestore();
     // Vis kun aktive ændringer, nyeste først
     const q = query(
       collection(db, 'programChanges'),
@@ -148,12 +193,17 @@ export default function Home({ navigation }) {
     return unsub;
   }, []);
 
-  //header, nedtælling/“i dag”, ændringer, beskrivelse, genveje og kontakt
+  //header, nedtælling/“i dag”, ændringer, beskrivelse, genveje 
   return (
-    <SafeAreaView style={Styles.container} edges={['top']}>
-    <View style={Styles.container} accessible accessibilityLabel="Hjemmeskærm med nedtælling og festivalbeskrivelse">
+    <SafeAreaView style={Styles.container} edges={['top', 'bottom']}>
+        <ScrollView
+          contentContainerStyle={Styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+      >
+
       <View style={Styles.header}>
-                <Pressable
+        <Pressable
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
           accessibilityLabel="Tilbage"
@@ -163,156 +213,220 @@ export default function Home({ navigation }) {
           <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
           <Text style={Styles.backText}>Tilbage</Text>
         </Pressable>
+
         <Text style={Styles.title}>Håb & Drømme Festival</Text>
         <View style={Styles.accentBar} />
       </View>
 
-      <Text style={Styles.dateText}>
-        Sidste torsdag i august — {niceDate}
-      </Text>
+        <Text style={Styles.dateText}>
+          Sidste torsdag i august — {niceDate}
+        </Text>
 
-      {isBeforeDay && (
-        <>
-          <Text style={Styles.countdownIntro}>Vi ses om</Text>
-          <View style={Styles.countdownCard} accessible accessibilityRole="timer" accessibilityLabel="Nedtælling til festivalstart">
-            <View style={Styles.countdownRow}>
-              <View style={Styles.timeBlock}>
-                <Text style={Styles.timeNumber}>{timeLeft.days}</Text>
-                <Text style={Styles.timeLabel}>Dage</Text>
-              </View>
-              <View style={Styles.timeBlock}>
-                <Text style={Styles.timeNumber}>{timeLeft.hours}</Text>
-                <Text style={Styles.timeLabel}>Timer</Text>
-              </View>
-              <View style={Styles.timeBlock}>
-                <Text style={Styles.timeNumber}>{timeLeft.minutes}</Text>
-                <Text style={Styles.timeLabel}>Min</Text>
-              </View>
-              <View style={Styles.timeBlock}>
-                <Text style={Styles.timeNumber}>{timeLeft.seconds}</Text>
-                <Text style={Styles.timeLabel}>Sek</Text>
+        {isBeforeDay && !PREVIEW_FESTIVAL_MODE && (
+          <>
+            <Text style={Styles.countdownIntro}>Vi ses om</Text>
+            <View
+              style={Styles.countdownCard}
+              accessible
+              accessibilityLabel={`Nedtælling til festivalstart: ${a11yCountdownLabel}`}
+              accessibilityLiveRegion="none"
+            >
+              {/* Skjul de dynamiske tal for skærmlæseren, så kun label oplæses */}
+              <View
+                style={Styles.countdownRow}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                <View style={Styles.timeBlock}>
+                  <Text style={Styles.timeNumber}>{timeLeft.days}</Text>
+                  <Text style={Styles.timeLabel}>Dage</Text>
+                </View>
+                <View style={Styles.timeBlock}>
+                  <Text style={Styles.timeNumber}>{timeLeft.hours}</Text>
+                  <Text style={Styles.timeLabel}>Timer</Text>
+                </View>
+                <View style={Styles.timeBlock}>
+                  <Text style={Styles.timeNumber}>{timeLeft.minutes}</Text>
+                  <Text style={Styles.timeLabel}>Min</Text>
+                </View>
+                <View style={Styles.timeBlock}>
+                  <Text style={Styles.timeNumber}>{timeLeft.seconds}</Text>
+                  <Text style={Styles.timeLabel}>Sek</Text>
+                </View>
               </View>
             </View>
-          </View>
-        </>
-      )}
+          </>
+        )}
 
-      {isFestivalDay && (
-        <View style={Styles.todayCard}>
-          <Text style={Styles.todayHeader}>
-            Velkommen! Festivalen er åben kl. {fmtHM(festivalOpen)}–{fmtHM(festivalClose)}
-          </Text>
-          {nowOrNext ? (
-            nowOrNext.mode === 'now' ? (
-              <Text style={Styles.todayLine}>
-                <Text style={Styles.todayStrong}>Nu: </Text>
-                {nowOrNext.item.title} • slutter {fmtHM(nowOrNext.item.end)}
-              </Text>
-            ) : (
-              <Text style={Styles.todayLine}>
-                <Text style={Styles.todayStrong}>Næste: </Text>
-                {nowOrNext.item.title} {fmtHM(nowOrNext.item.start)}–{fmtHM(nowOrNext.item.end)}
-              </Text>
-            )
-          ) : (
-            <Text style={Styles.todayLineStrong}>Dagens program er slut. Tak for i dag!</Text>
-          )}
-        </View>
-      )}
-
-      {changes.length > 0 && (
-    <View style={Styles.alertCard} accessibilityLabel="Vigtige ændringer">
-     {changes.map((c) => (
-      <Text key={c.id} style={Styles.alertText}>{c.text}</Text>
-     ))}
-   </View>
-    )}
-      <View style={Styles.quickRow} accessible accessibilityRole="menu">
-        <Pressable
-          style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Program')}
-          accessibilityRole="button"
-          accessibilityLabel="Se programmet"
-        >
-        <Text style={Styles.quickButtonText}>Program</Text>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [Styles.quickButtonOrange, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Galleri')} 
-          accessibilityRole="button"
-          accessibilityLabel="Åbn galleri"
-        >
-          <Text style={Styles.quickButtonTextLight}>Galleri</Text>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
-          onPress={() => navigation.navigate('Pladsen')} 
-          accessibilityRole="button"
-          accessibilityLabel="Åbn kort"
-        >
-          <Text style={Styles.quickButtonText}>Kort</Text>
-        </Pressable>
+      {showTodayCard && (
+  <View style={Styles.todayCard} accessible accessibilityRole="summary" accessibilityLabel="Aktuelt på festivalen">
+    <View style={Styles.todayHeaderRow}>
+      <Text style={Styles.todayHeader}>
+        Velkommen! Åbent {fmtHM(festivalOpen)}–{fmtHM(festivalClose)}
+      </Text>
+      <View style={Styles.nowPill}>
+        <Text style={Styles.nowPillText}>
+          {nowOrNext?.mode === 'now' ? 'NU' : 'NÆSTE'}
+        </Text>
       </View>
+    </View>
 
-{/* Tilmelding / billet-info */}
-<View style={Styles.signupCard} accessible accessibilityRole="summary" accessibilityLabel="Tilmelding til festival">
-  <Text style={Styles.signupTitle}>Har du ikke billet endnu?</Text>
-  <Text style={Styles.signupText}>
-    Meld dig til ved at ringe på {SIGNUP_PHONE.replace(/(\d{2})(?=\d)/g, '$1 ')}{" "}
-    eller skrive en mail til {SIGNUP_EMAIL}.
-  </Text>
+    {/* Beregn "current" / "next" */}
+    {(() => {
+      const current = nowOrNext?.mode === 'now' ? nowOrNext.item : null;
+      const currentStart = current ? toDate(current.start) : null;
+      const currentEnd   = current ? toDate(current.end)   : null;
+      const minutesLeft  = current ? Math.max(0, Math.ceil((currentEnd - now)/60000)) : 0;
+      const progressPct  = current
+        ? Math.min(100, Math.max(0, ((now - currentStart) / (currentEnd - currentStart)) * 100))
+        : 0;
 
-  <View style={Styles.signupRow}>
-    <Pressable
-      onPress={() => Linking.openURL(`tel:${SIGNUP_PHONE}`)}
-      accessibilityRole="button"
-      accessibilityLabel={`Ring ${SIGNUP_PHONE}`}
-      style={({ pressed }) => [Styles.signupButton, pressed && Styles.signupButtonPressed]}
-    >
-      <Text style={Styles.signupButtonText}>Ring</Text>
-    </Pressable>
+      const next = nowOrNext?.mode === 'now'
+        ? (events || []).find(e => toDate(e.start) > toDate(currentEnd))
+        : nowOrNext?.item;
 
-    <Pressable
-      onPress={() => Linking.openURL(
-        `mailto:${SIGNUP_EMAIL}?subject=Tilmelding%20til%20H%C3%A5b%20%26%20Dr%C3%B8mme%20Festival`
-      )}
-      accessibilityRole="button"
-      accessibilityLabel={`Skriv mail til ${SIGNUP_EMAIL}`}
-      style={({ pressed }) => [Styles.signupButtonAlt, pressed && Styles.signupButtonPressed]}
-    >
-      <Text style={Styles.signupButtonText}>Skriv mail</Text>
-    </Pressable>
+      if (current) {
+        return (
+          <>
+            <Text style={Styles.eventTitleLarge}>{current.title}</Text>
+
+            <View style={Styles.metaRow}>
+              <Text style={Styles.placeChip}>{current.place || 'Ukendt sted'}</Text>
+              <Text style={Styles.timeRange}>{fmtHM(currentStart)}–{fmtHM(currentEnd)}</Text>
+            </View>
+
+            {/* Progressbar */}
+            <View style={Styles.progressWrap} accessibilityRole="progressbar" accessibilityValue={{ now: Math.round(progressPct), min: 0, max: 100 }}>
+              <View style={[Styles.progressInner, { width: `${progressPct}%` }]} />
+            </View>
+            <Text style={Styles.progressHint}>
+              {minutesLeft} min tilbage
+            </Text>
+
+            {/* Næste */}
+            {next && (
+              <View style={Styles.nextRow} accessible accessibilityLabel={`Næste aktivitet: ${next.title} kl. ${fmtHM(toDate(next.start))}`}>
+                <Text style={Styles.nextLabel}>Næste</Text>
+                <Text style={Styles.nextTitle}>{next.title}</Text>
+                <Text style={Styles.nextWhen}>
+                  {fmtHM(toDate(next.start))} • {next.place || 'Ukendt sted'}
+                </Text>
+              </View>
+            )}
+
+            {/* CTA’er */}
+            <View style={Styles.ctasRow}>
+              <Pressable onPress={() => navigation.navigate('Program')} style={Styles.ctaBtn} accessibilityRole="button" accessibilityLabel="Se programmet">
+                <Text style={Styles.ctaText}>Program</Text>
+              </Pressable>
+              <Pressable onPress={() => navigation.navigate('Plads')} style={Styles.ctaBtnAlt} accessibilityRole="button" accessibilityLabel="Åbn kort">
+                <Text style={Styles.ctaTextAlt}>Kort</Text>
+              </Pressable>
+            </View>
+          </>
+        );
+      }
+
+      // Hvis der ikke er noget nu – vis "Næste" eller slut-besked
+      if (next) {
+        return (
+          <>
+            <Text style={Styles.eventTitleLarge}>{next.title}</Text>
+            <View style={Styles.metaRow}>
+              <Text style={Styles.placeChip}>{next.place || 'Ukendt sted'}</Text>
+              <Text style={Styles.timeRange}>
+                Starter {fmtHM(toDate(next.start))} • slutter {fmtHM(toDate(next.end))}
+              </Text>
+            </View>
+          </>
+        );
+      }
+
+      return <Text style={Styles.todayLineStrong}>Dagens program er slut. Tak for i dag!</Text>;
+    })()}
   </View>
+)}
+{/* Genveje: Program / Galleri / Kort */}
+<View style={Styles.quickRow} accessible accessibilityRole="menu">
+  <Pressable
+    style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
+    onPress={() => navigation.navigate('Program')}
+    accessibilityRole="button"
+    accessibilityLabel="Se programmet"
+    hitSlop={8}
+  >
+    <Text style={Styles.quickButtonText}>Program</Text>
+  </Pressable>
+
+  <Pressable
+    style={({ pressed }) => [Styles.quickButtonOrange, pressed && Styles.quickButtonPressed]}
+    onPress={() => navigation.navigate('Galleri')}
+    accessibilityRole="button"
+    accessibilityLabel="Åbn galleri"
+    hitSlop={8}
+  >
+    <Text style={Styles.quickButtonTextLight}>Galleri</Text>
+  </Pressable>
+
+  <Pressable
+    style={({ pressed }) => [Styles.quickButton, pressed && Styles.quickButtonPressed]}
+    onPress={() => navigation.navigate('Plads')}
+    accessibilityRole="button"
+    accessibilityLabel="Åbn kort"
+    hitSlop={8}
+  >
+    <Text style={Styles.quickButtonText}>Kort</Text>
+  </Pressable>
 </View>
 
-     <View style={Styles.helpCard} accessible accessibilityRole="summary">
-  <View style={Styles.helpHeaderRow}>
-    <Text style={Styles.helpTitle}>Har du brug for hjælp?</Text>
-    <Text style={Styles.helpSub}>Ring til en pædagog</Text>
-  </View>
-
-  <View style={Styles.contactList} accessible accessibilityLabel="Kontakt pædagoger">
-    {CONTACTS.map((c, i) => (
-      <Pressable
-        key={i}
-        onPress={() => Linking.openURL(`tel:${c.phone}`)}
-        accessibilityRole="button"
-        accessibilityLabel={`Ring til ${c.name}`}
-        style={({ pressed }) => [
-          Styles.contactButton,
-          pressed && Styles.contactButtonPressed,
-        ]}
-      >
-        <Text style={Styles.contactButtonText}>
-          {c.name} — {c.phone.replace(/(\d{2})(?=\d)/g, '$1 ')}
-        </Text>
-      </Pressable>
+{/* Vigtige ændringer (fra Firestore) */}
+{changes.length > 0 && (
+  <View style={[Styles.alertCard, { marginTop: 16 }]} accessibilityLabel="Vigtige ændringer">
+    
+    {<Text style={Styles.alertTitle}>Ændringer i dagens program</Text> }
+    {changes.map((c) => (
+      <Text key={c.id} style={Styles.alertText}>
+        {c.text}
+      </Text>
     ))}
   </View>
-</View>
-    </View>
+)}
+        {/* Tilmelding / billet-info */}
+        {!hideSignupCard && (
+        <View style={Styles.signupCard} accessibilityLabel="Tilmelding til festival">
+          <Text style={Styles.signupTitle}>Har du ikke billet endnu?</Text>
+          <Text style={Styles.signupText}>
+            Meld dig til ved at ringe på {SIGNUP_PHONE.replace(/(\d{2})(?=\d)/g, '$1 ')} eller skrive en mail til {SIGNUP_EMAIL}.
+          </Text>
+        
+          <View style={Styles.signupRow}>
+            <Pressable
+              onPress={() => Linking.openURL(`tel:${SIGNUP_PHONE}`)}
+              accessibilityRole="link"
+              accessibilityLabel={`Ring ${SIGNUP_PHONE.replace(/(\d{2})(?=\d)/g, '$1 ')}`}
+              accessibilityHint="Åbner telefonopkald"
+              style={({ pressed }) => [Styles.signupButton, pressed && Styles.signupButtonPressed]}
+              hitSlop={8}
+            >
+              <Text style={Styles.signupButtonText}>Ring</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => Linking.openURL(buildSignupMailto(niceDate))}
+              accessibilityRole="link"
+              accessibilityLabel={`Skriv mail til ${SIGNUP_EMAIL}`}
+              accessibilityHint="Åbner din mailapp med en udfyldt tilmeldingsskabelon"
+              style={({ pressed }) => [Styles.signupButtonAlt, pressed && Styles.signupButtonPressed]}
+              hitSlop={8}
+            >
+              <Text style={Styles.signupButtonText}>Skriv mail</Text>
+            </Pressable>
+          </View>
+          
+        </View>
+        )}
+        
+    </ScrollView>
     </SafeAreaView>
   );
 }
