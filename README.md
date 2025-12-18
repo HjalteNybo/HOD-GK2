@@ -12,5 +12,4 @@ Previewe festival tilstand (for at se hvordan appen ser ud når festivalen er i 
 4. Start appen igen. Nu kan du se hvordan forsiden dynamisk ændrer sig ud fra tidspunktet på festivaldagen.
 
 Demovideo:
-1. Demovideo ligger i HOD-GK2/HOD/assets 
-2. Den ligger også på YouTube. 
+2. https://www.youtube.com/watch?v=d2q49NoHdps på YouTube.  
