@@ -7,6 +7,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../Firebase/FirebaseApp';
 import { useAuth } from '../Context/Auth';
 
+// Skærm til personale for at uploade billeder og videoer til Firebase Storage
 export default function Upload({ navigation }) {
   const { user, isStaff } = useAuth();
   const [uploading, setUploading] = useState(false);

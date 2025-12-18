@@ -25,7 +25,7 @@ try {
   }
 }
 
-// Debug: vis hvilken config der faktisk er aktiv nu. bliver slettet men lige nu beholder vi den hviiiis nu der skulle ske noget mærkeligt
+// Debug: vis hvilken config der faktisk er aktiv nu. 
 if (__DEV__) {
   console.log('[cfg] sdk =', FB_SDK_VERSION);
   console.log('[cfg] projectId(active) =', app.options.projectId);

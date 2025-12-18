@@ -28,7 +28,7 @@ function ProgramStack() {
   );
 }
 
-// Stack til Galleri-fanen (grid -> fuld visning)
+// Stack til Galleri-fanen (g fuld visning)
 function GalleryStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -81,7 +81,7 @@ function PersonaleStack() {
         })}
       />
 
-      {/* (valgfrit) MediaViewer med sort header */}
+      {/* MediaViewer med sort header */}
       <Stack.Screen
         name="MediaViewer"
         component={MediaViewer}
@@ -96,7 +96,7 @@ function PersonaleStack() {
     </Stack.Navigator>
   );
 }
-
+//tilbage knap til personale stack
 function BackToPersonale({ navigation }) {
   const goBackToStaff = () => {
     if (navigation.canGoBack()) navigation.goBack();

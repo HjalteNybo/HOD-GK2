@@ -5,7 +5,7 @@ import Styles from '../Styles/HomeStyles';
 import { getFirestore, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 
 // toggle til festival-mode for previewing "i dag"-tilstand
-const PREVIEW_FESTIVAL_MODE = false; // <-- sæt til false i prod
+const PREVIEW_FESTIVAL_MODE = false; // (TEST12) sæt til true for at teste "festival i gang"-tilstand 
 
 //finder datoen for “sidste torsdag i august” i et givent år
 function getFestivalDate(year) {
@@ -50,7 +50,7 @@ function getDayState(now, festStart, festEnd) {
 const SIGNUP_PHONE = '88888888';
 const SIGNUP_EMAIL = 'info@haabogdroemme.dk';
 
-// Mailto med body-template
+// Mail med body-template
 function buildSignupMailto(niceDate) {
   const subject = `Tilmelding til Håb & Drømme Festival`;
   const body = [
@@ -127,7 +127,7 @@ useEffect(() => {
   useEffect(() => {
   const id = setInterval(() => {
     if (PREVIEW_FESTIVAL_MODE) {
-      // Fast "midt på dagen" på festivaldatoen (kan ændres til fx '10:15')
+      // (TEST12)Fast "midt på dagen" på festivaldatoen til test af festival igang tilstand (kan ændres til fx '10:15')
       setNow(timeOnDate(festivalDate, '15:00'));
       setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, done: true });
     } else {
@@ -157,7 +157,7 @@ useEffect(() => {
   //tjekker om vi er før/under/efter festivaldagen ud fra nuværende tid
   const { isBeforeDay, isFestivalDay } = getDayState(now, festivalOpen, festivalClose);
   const showTodayCard = PREVIEW_FESTIVAL_MODE || isFestivalDay;
-  const PREVIEW_FORCE_HIDE_SIGNUP = false; // sæt til true KUN når du vil skjule tilmeldingskortet
+  const PREVIEW_FORCE_HIDE_SIGNUP = false; // TEST12 sæt til true for at teste uden tilmeldingskort (festival igang tilstand)
   const hideSignupCard = isFestivalDay || PREVIEW_FORCE_HIDE_SIGNUP;
 
   //finder igangværende aktivitet eller næste aktivitet i dag

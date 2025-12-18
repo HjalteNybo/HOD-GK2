@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../Context/Auth';
 import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
+// Skærm til personale for at oprette, redigere og slette programændringer
 export default function ProgramChanges() {
   const { user, isStaff } = useAuth();
   const db = getFirestore();
@@ -20,6 +21,7 @@ export default function ProgramChanges() {
     return unsub;
   }, []);
 
+  // Opretter en ny programændring i Firestore
   const createChange = async () => {
     if (!text.trim()) return;
     try {
@@ -38,7 +40,7 @@ export default function ProgramChanges() {
       setSaving(false);
     }
   };
-
+// Skifter aktiv-status for en programændring
   const toggleActive = async (item) => {
     try {
       await updateDoc(doc(db, 'programChanges', item.id), { active: !item.active });
@@ -46,7 +48,7 @@ export default function ProgramChanges() {
       Alert.alert('Fejl', String(e?.message || e));
     }
   };
-
+// Sletter en programændring efter bekræftelse
   const removeItem = async (item) => {
     Alert.alert('Slet ændring', 'Er du sikker?', [
       { text: 'Annuller' },
@@ -64,6 +66,7 @@ export default function ProgramChanges() {
     ]);
   };
 
+  // Hvis ikke personale, vis besked om manglende adgang
   if (!isStaff) {
     return (
       <View style={{ flex:1, justifyContent:'center', alignItems:'center', padding:16 }}>
@@ -71,7 +74,7 @@ export default function ProgramChanges() {
       </View>
     );
   }
-
+// Hoved-UI for personale til at oprette og administrere programændringer
   return (
     <SafeAreaView style={{ flex:1 }} edges={['top','bottom']}>
       <View style={{ flex:1, padding:16, paddingTop: 12, gap:12 }}>

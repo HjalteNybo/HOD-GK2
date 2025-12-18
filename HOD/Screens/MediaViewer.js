@@ -1,20 +1,5 @@
-import React, {
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
-} from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  Image,
-  Dimensions,
-  ActivityIndicator,
-  Platform,
-} from "react-native";
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState, useEffect } from "react";
+import { View, Text, FlatList, Image, Dimensions, ActivityIndicator, Platform } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { VideoView, useVideoPlayer } from "expo-video";
 import styles from "../Styles/MedieViewerStyles";

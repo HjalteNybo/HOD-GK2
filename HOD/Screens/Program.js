@@ -37,7 +37,7 @@ function isSameCalendarDay(a, b) {
   );
 }
 
-// -------- Notifikations-hjælpere (program-opdateret) --------
+// Notifikations-hjælpere (program-opdateret) 
 const PROGRAM_UPDATE_KEY = "program:lastChangeId";
 const PROGRAM_NOTIFY_THROTTLE_KEY = "program:lastNotifiedAtMs";
 const THROTTLE_MINUTES = 10;

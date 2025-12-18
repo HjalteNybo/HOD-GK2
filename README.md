@@ -1,11 +1,16 @@
 # HOD-GK2
-Vi har valgt at arbejde videre på Viktors GK1 projekt, hvor vi har tilføjet login, databasehåndtering via firebase, kort over pladsen, upload af billeder/videoer og en galleri side. 
+Start af app
+1. Gå til projektmappen HOD-GK2/HOD.
+2. Kør i terminalen: npx expo start. 
+3. Skift til Expo Go (tryk s i terminalen, hvis den står på Development Build).
+3. Scan QR koden og velkommen til Håb og Drømme festivalen appen (the one and only)
 
-Arbejdsfordeling:
+Previewe festival tilstand (for at se hvordan appen ser ud når festivalen er i gang)
+1. Åbn filen: HOD-GK2/HOD/Screens/Home.js
+2. Søg efter TEST12 (Ctrl+F).
+3. Du finder 3 test-variabler: Sæt de to boolean-variabler til true. Justér tidspunktet til fx 11:40
+4. Start appen igen. Nu kan du se hvordan forsiden dynamisk ændrer sig ud fra tidspunktet på festivaldagen.
 
-Hjalte: MapScreen.js, Program.js, ActivityDetails.js, EventDetails.js. + de stylesheets der passer til.
-Viktor: Home.js, Login.js, Auth.js, FirebaseApp.js, Uploads.js, Galleri.js, MediaViewer.js. + de stylesheets der passer til. 
-
-
-LINK TIL VIDEO:
-HOD-GK2/HOD/assets/video af app.MP4
+Demovideo:
+1. Demovideo ligger i HOD-GK2/HOD/assets 
+2. Den ligger også på YouTube. 

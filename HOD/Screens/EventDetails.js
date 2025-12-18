@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text } from "react-native";
 import Styles from "../Styles/EventDetailsStyles";
 
+// Skærm med detaljer om en event i programmet
 export default function EventDetails({ route }) {
   const { event } = route.params || {};
   if (!event) {
@@ -18,6 +19,7 @@ export default function EventDetails({ route }) {
   const description = event.description || "Ingen beskrivelse.";
   const isAccessible = !!event.accessible;
 
+  // Renderer event-detaljer
   return (
     <View style={Styles.container}>
       <Text style={Styles.title} accessibilityRole="header">

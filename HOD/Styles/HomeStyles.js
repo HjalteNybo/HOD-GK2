@@ -2,16 +2,16 @@ import { StyleSheet } from 'react-native';
 
 // Farver fra plakaten
 const Colors = {
-  background: '#F5E8C8', // sand/beige
+  background: '#F5E8C8', 
   surface: '#FFFFFF',
-  primary: '#3E6B39',    // mørk skovgrøn
-  secondary: '#F28C38',  // varm orange
-  accent: '#F6C65B',     // gul badge/dato
-  text: '#1E1E1E',       // primær tekst
-  mutedText: '#5C7E8C',  // blågrå sekundær tekst
-  success: '#B9D08B',    // lys græsgrøn 
-  alert: '#C23B22',      // rød (ændringer)
-  alertBg: '#F7D6D0',    // lys rød baggrund til alerts
+  primary: '#3E6B39',    
+  secondary: '#F28C38',  
+  accent: '#F6C65B',     
+  text: '#1E1E1E',      
+  mutedText: '#5C7E8C',  
+  success: '#B9D08B',    
+  alert: '#C23B22',     
+  alertBg: '#F7D6D0',    
 };
 
 export default StyleSheet.create({

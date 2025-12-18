@@ -4,7 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import styles from "../Styles/MapScreenStyles";
 import { colors } from "../Styles/GlobalStyles";
 
-// Midlertidige ikoner – udskiftes med rigtige senere
+// Midlertidige ikoner 
 const ICON_SCENE = require("../assets/adaptive-icon.png");
 const ICON_SANSE = require("../assets/adaptive-icon.png");
 const ICON_TELT  = require("../assets/adaptive-icon.png");

@@ -5,9 +5,10 @@ import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestor
 import { db } from '../Firebase/FirebaseApp';
 import s from '../Styles/GalleriStyles';
 
+// Skærm til at vise galleri med billeder og videoer uploadet af personale
 const COLS = 3;
 const GAP = 6;
-
+// Hovedkomponent
 export default function Galleri({ navigation }) {
   const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
@@ -51,7 +52,7 @@ export default function Galleri({ navigation }) {
     return () => unsub();
   }, []);
 
-  // Tilstande
+  // Renderingslogik
   if (items === null) {
     return (
       <SafeAreaView style={s.container} edges={['top', 'left', 'right']}>
@@ -83,7 +84,6 @@ export default function Galleri({ navigation }) {
     );
   }
 
-  // A11y-label for hver tile
   const getTileLabel = (item, index) => {
     const kind = item.type === 'video' ? 'Video' : 'Billede';
     const pos = `${index + 1} af ${items.length}`;

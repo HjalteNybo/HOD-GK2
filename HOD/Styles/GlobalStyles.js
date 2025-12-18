@@ -5,7 +5,6 @@ export const colors = {
   text: '#0F172A',
   muted: '#64748B',
   primary: '#3558A6',
-  //Det er disse farver der skal bruges i appen(nedenfor)
   background: '#F5E8C8',
   surface: '#FFFFFF',
   primary: '#3E6B39',
