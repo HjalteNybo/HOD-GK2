@@ -4,6 +4,7 @@ import { colors, spacing, font } from "../Styles/GlobalStyles";
 export default StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background ?? "#0b0b0b" },
 
+  // (OLD overlay bar kept for reference but unused)
   filterBar: {
     position: "absolute",
     zIndex: 30,
@@ -14,6 +15,7 @@ export default StyleSheet.create({
     flexWrap: "wrap",
   },
 
+  // NEW: chips below the image
   filterBarBottom: {
     paddingHorizontal: spacing.m,
     paddingTop: spacing.s,
@@ -36,6 +38,7 @@ export default StyleSheet.create({
     justifyContent: "center",
   },
 
+  // Pins
   pin: {
     position: "absolute",
     alignItems: "center",
@@ -64,6 +67,7 @@ export default StyleSheet.create({
     textShadowRadius: 4,
   },
 
+  // Chip buttons
   pressed: { opacity: 0.85 },
   chip: {
     flexDirection: "row",
@@ -93,6 +97,7 @@ export default StyleSheet.create({
   chipTextOn: { color: "#fff" },
   chipTextOff: { color: colors.text ?? "#d7d7d7" },
 
+  // (sheet styles kept if you use elsewhere)
   sheet: {
     position: "absolute",
     left: spacing.m,
@@ -135,6 +140,7 @@ export default StyleSheet.create({
   },
   sheetButtonText: { color: "#000", fontFamily: font?.semibold ?? undefined, fontSize: 14 },
 
+  // Modal overlay
   modalHost: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 50,
@@ -169,7 +175,7 @@ export default StyleSheet.create({
     fontSize: 16,
     fontFamily: font?.semibold ?? undefined,
   },
-  
+  // Make description text pure white now
   modalText: {
     color: "#fff",
     fontSize: 14,

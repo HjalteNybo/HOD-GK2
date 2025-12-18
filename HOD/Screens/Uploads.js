@@ -192,6 +192,7 @@ export default function Upload({ navigation }) {
   //upload-knap, loader/progress og tilbage-knap
   return (
     <SafeAreaView style={{ flex:1, padding:16 }}>
+      <Text style={{ fontSize:22, fontWeight:'800', marginBottom:12 }}>Upload filer</Text>
 
       <Pressable
         onPress={pickAndUpload}

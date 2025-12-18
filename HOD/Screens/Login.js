@@ -23,13 +23,13 @@ export default function Login({ navigation }) {
       <View style={{ flex:1, padding:16, gap:12, justifyContent:'center' }}>
         <Text style={{ fontSize:18, fontWeight:'700' }}>Du er logget ind</Text>
         <Text>{user.email}</Text>
-        <Text>{isStaff ? 'Rolle: Personale' : 'Rolle: Bruger (ingen upload)'}</Text>
+        <Text>{isStaff ? 'Rolle: Personale (må uploade)' : 'Rolle: Bruger (ingen upload)'}</Text>
 
         {isStaff && (
           <Pressable
             onPress={() => navigation.navigate('Upload')}
             style={({pressed}) => [
-              { backgroundColor:'#3E6B39', padding:12, borderRadius:10, alignItems:'center' },
+              { backgroundColor:'#F28C38', padding:12, borderRadius:10, alignItems:'center' },
               pressed && { opacity:0.9 }
             ]}
             accessibilityLabel="Upload filer"
@@ -54,7 +54,7 @@ export default function Login({ navigation }) {
         <Pressable
           onPress={logout}
           style={({pressed}) => [
-            { backgroundColor:'#ff0000ff', padding:12, borderRadius:10, alignItems:'center' },
+            { backgroundColor:'#3E6B39', padding:12, borderRadius:10, alignItems:'center' },
             pressed && { opacity:0.9 }
           ]}
         >

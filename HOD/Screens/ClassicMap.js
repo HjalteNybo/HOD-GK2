@@ -12,11 +12,11 @@ const MAP_IMAGE = require("../assets/pladsen.png");
 const FILTERS_KEY = "classicmap_filters_v1";
 
 const PLACES = {
-  Hovedområde: { boothId: "Hovedområde", label: "Hovedområde", short: "Hovedområde", xPct: 50, yPct: 18, color: "#FF6B00", icon: "home" },
-  Scene:       { boothId: "Scene",       label: "Main Scene",  short: "Scene",        xPct: 62, yPct: 28, color: "#7C4DFF", icon: "musical-notes" },
-  Sanseområdet:{ boothId: "Sanseområdet",label: "Sanseområdet",short: "Sanse",        xPct: 30, yPct: 45, color: "#00BCD4", icon: "color-wand" },
-  "Telt A":    { boothId: "Telt A",      label: "Telt A",      short: "Telt A",       xPct: 40, yPct: 60, color: "#4CAF50", icon: "pricetag" },
-  Fællesområde:{ boothId: "Fællesområde",label: "Fællesområde",short: "Fælles",       xPct: 55, yPct: 70, color: "#FFC107", icon: "people" },
+  "Hovedområde": { boothId: "Hovedområde", label: "Hovedområde", short: "Hovedområde", xPct: 50, yPct: 18, color: "#FF6B00", icon: "home" },
+  "Scene":       { boothId: "Scene",       label: "Main Scene",  short: "Scene",        xPct: 62, yPct: 28, color: "#7C4DFF", icon: "musical-notes" },
+  "Sanseområdet":{ boothId: "Sanseområdet",label: "Sanseområdet",short: "Sanse",        xPct: 30, yPct: 45, color: "#00BCD4", icon: "color-wand" },
+  "Telt A":      { boothId: "Telt A",      label: "Telt A",      short: "Telt A",       xPct: 40, yPct: 60, color: "#4CAF50", icon: "pricetag" },
+  "Fællesområde":{ boothId: "Fællesområde",label: "Fællesområde",short: "Fælles",       xPct: 55, yPct: 70, color: "#FFC107", icon: "people" },
 };
 const PLACE_ORDER = ["Hovedområde", "Scene", "Sanseområdet", "Telt A", "Fællesområde"];
 
@@ -25,45 +25,29 @@ const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 export default function ClassicMapCompat() {
   const navigation = useNavigation();
 
-  // Persistente filtre
+  // --- filters (persistent)
   const [activeFilters, setActiveFilters] = useState(() => new Set(PLACE_ORDER));
-  useEffect(() => {
-    (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(FILTERS_KEY);
-        if (raw) setActiveFilters(new Set(JSON.parse(raw)));
-      } catch {}
-    })();
+  useEffect(() => { (async () => {
+    try { const raw = await AsyncStorage.getItem(FILTERS_KEY); if (raw) setActiveFilters(new Set(JSON.parse(raw))); } catch {} })();
   }, []);
-  useEffect(() => {
-    (async () => {
-      try {
-        await AsyncStorage.setItem(FILTERS_KEY, JSON.stringify([...activeFilters]));
-      } catch {}
-    })();
-  }, [activeFilters]);
+  useEffect(() => { (async () => { try { await AsyncStorage.setItem(FILTERS_KEY, JSON.stringify([...activeFilters])); } catch {} })(); }, [activeFilters]);
+  const toggleFilter = (k) => setActiveFilters(prev => {
+    const next = new Set(prev); next.has(k) ? next.delete(k) : next.add(k);
+    return next.size === 0 ? new Set(PLACE_ORDER) : next;
+  });
 
-  const toggleFilter = (k) =>
-    setActiveFilters((prev) => {
-      const next = new Set(prev);
-      next.has(k) ? next.delete(k) : next.add(k);
-      return next.size === 0 ? new Set(PLACE_ORDER) : next;
-    });
-
-  // Layout & billedratio
+  // --- layout
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
   const [content, setContent] = useState({ w: 0, h: 0 });
   const imgRatioRef = useRef(1);
-
   const onLayout = (e) => {
-    const { width, height } = e.nativeEvent.layout;
-    setViewport({ w: width, h: height });
+    const { width } = e.nativeEvent.layout;
+    setViewport({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height });
     const ratio = imgRatioRef.current || 1;
     const targetW = width;
     const targetH = targetW / ratio;
     setContent({ w: targetW, h: targetH });
   };
-
   useEffect(() => {
     try {
       const src = RNImage.resolveAssetSource(MAP_IMAGE);
@@ -71,7 +55,7 @@ export default function ClassicMapCompat() {
     } catch {}
   }, []);
 
-  // Zoom & pan
+  // --- JS Animated zoom + pan (pan only when zoomed)
   const pinchRef = useRef(null);
   const panRef = useRef(null);
   const doubleTapRef = useRef(null);
@@ -92,15 +76,14 @@ export default function ClassicMapCompat() {
     lastScaleRef.current = val;
     setZoomed(val > 1.01);
     if (val <= 1.01) {
-      offsetXRef.current = 0;
-      offsetYRef.current = 0;
-      translationX.setOffset(0);
-      translationX.setValue(0);
-      translationY.setOffset(0);
-      translationY.setValue(0);
+      // reset pan when back to 1x
+      offsetXRef.current = 0; offsetYRef.current = 0;
+      translationX.setOffset(0); translationX.setValue(0);
+      translationY.setOffset(0); translationY.setValue(0);
     }
   };
 
+  // pinch
   const onPinchEvent = Animated.event([{ nativeEvent: { scale: pinchScale } }], { useNativeDriver: true });
   const onPinchStateChange = (e) => {
     if (e.nativeEvent.state === State.END || e.nativeEvent.oldState === State.ACTIVE) {
@@ -111,13 +94,17 @@ export default function ClassicMapCompat() {
     }
   };
 
+  // double-tap
   const onDoubleTapActivated = () => {
     const target = lastScaleRef.current > 1.2 ? 1 : 2;
     animateTo(target);
   };
 
-  const onPanEvent = Animated.event([{ nativeEvent: { translationX, translationY } }], { useNativeDriver: true });
-
+  // pan (only when zoomed)
+  const onPanEvent = Animated.event(
+    [{ nativeEvent: { translationX, translationY } }],
+    { useNativeDriver: true }
+  );
   const getPanBounds = () => {
     const s = lastScaleRef.current || 1;
     const scaledW = content.w * s;
@@ -128,15 +115,11 @@ export default function ClassicMapCompat() {
     const maxY = Math.max(0, (scaledH - vh) / 2);
     return { maxX, maxY };
   };
-
   const onPanStateChange = (e) => {
     if (!zoomed) {
-      translationX.setOffset(0);
-      translationX.setValue(0);
-      translationY.setOffset(0);
-      translationY.setValue(0);
-      offsetXRef.current = 0;
-      offsetYRef.current = 0;
+      translationX.setOffset(0); translationX.setValue(0);
+      translationY.setOffset(0); translationY.setValue(0);
+      offsetXRef.current = 0; offsetYRef.current = 0;
       return;
     }
     if (e.nativeEvent.state === State.BEGAN) {
@@ -146,9 +129,11 @@ export default function ClassicMapCompat() {
     if (e.nativeEvent.state === State.END || e.nativeEvent.oldState === State.ACTIVE) {
       offsetXRef.current += e.nativeEvent.translationX;
       offsetYRef.current += e.nativeEvent.translationY;
+
       const { maxX, maxY } = getPanBounds();
       offsetXRef.current = clamp(offsetXRef.current, -maxX, maxX);
       offsetYRef.current = clamp(offsetYRef.current, -maxY, maxY);
+
       translationX.setOffset(offsetXRef.current);
       translationX.setValue(0);
       translationY.setOffset(offsetYRef.current);
@@ -156,14 +141,18 @@ export default function ClassicMapCompat() {
     }
   };
 
+  // transform (pan -> scale)
   const transformStyle = {
-    transform: [{ translateX: translationX }, { translateY: translationY }, { scale }],
+    transform: [
+      { translateX: translationX },
+      { translateY: translationY },
+      { scale },
+    ],
   };
 
-  // Modal
+  // --- modal over map (fade/scale)
   const [selected, setSelected] = useState(null);
   const modalAnim = useRef(new Animated.Value(0)).current;
-
   const openModal = (key) => {
     setSelected(key);
     requestAnimationFrame(() => {
@@ -171,24 +160,25 @@ export default function ClassicMapCompat() {
       Animated.timing(modalAnim, { toValue: 1, duration: 160, useNativeDriver: true }).start();
     });
   };
-
   const closeModal = () => {
     Animated.timing(modalAnim, { toValue: 0, duration: 120, useNativeDriver: true }).start(({ finished }) => {
       if (finished) setSelected(null);
     });
   };
-
   const modalStyle = {
     opacity: modalAnim,
     transform: [{ scale: modalAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }],
   };
-
   const navigateToProgram = (boothId) => navigation.navigate("Program", { boothId });
 
-  const filteredPlaceKeys = useMemo(() => PLACE_ORDER.filter((k) => activeFilters.has(k)), [activeFilters]);
+  const filteredPlaceKeys = useMemo(
+    () => PLACE_ORDER.filter((k) => activeFilters.has(k)),
+    [activeFilters]
+  );
 
   return (
-    <View style={styles.root} onLayout={onLayout}>
+    <View style={styles.root} onLayout={onLayout} accessibilityLabel="Plads-kort (compat)">
+      {/* === GESTURE AREA (fills available height) === */}
       <TapGestureHandler
         ref={doubleTapRef}
         numberOfTaps={2}
@@ -222,8 +212,7 @@ export default function ClassicMapCompat() {
                         style={{ width: "100%", height: "100%" }}
                         resizeMode="contain"
                         accessibilityIgnoresInvertColors
-                        accessibilityRole="image"
-                        accessibilityLabel="Kort over pladsen. Brug to fingre for at zoome. Dobbelttryk for at skifte zoom."
+                        accessibilityLabel="Kort over pladsen"
                       />
                       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
                         {filteredPlaceKeys.map((key) => {
@@ -236,16 +225,12 @@ export default function ClassicMapCompat() {
                               style={[styles.pin, { left, top }]}
                               onPress={() => openModal(key)}
                               accessibilityRole="button"
-                              accessibilityLabel={`${p.label}. Tryk for detaljer og vis i Program.`}
-                              accessibilityHint="Åbner en dialog med detaljer"
-                              hitSlop={8}
+                              accessibilityLabel={`${p.label}. Tryk for detaljer og program.`}
                             >
                               <View style={[styles.pinBubble, { backgroundColor: p.color }]}>
-                                <Ionicons name={p.icon} size={16} color="#fff" />
+                                <Ionicons name={p.icon} size={16} color={"#fff"} />
                               </View>
-                              <Text style={styles.pinLabel} numberOfLines={1}>
-                                {p.short || p.label}
-                              </Text>
+                              <Text style={styles.pinLabel} numberOfLines={1}>{p.short || p.label}</Text>
                             </Pressable>
                           );
                         })}
@@ -259,7 +244,8 @@ export default function ClassicMapCompat() {
         </View>
       </TapGestureHandler>
 
-      <View style={styles.filterBarBottom}>
+      {/* === CHIPS UNDER THE IMAGE === */}
+      <View style={styles.filterBarBottom} accessibilityRole="tablist">
         {PLACE_ORDER.map((k) => {
           const isOn = activeFilters.has(k);
           return (
@@ -271,45 +257,37 @@ export default function ClassicMapCompat() {
                 isOn ? styles.chipOn : styles.chipOff,
                 pressed && styles.chipPressed,
               ]}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: isOn }}
-              accessibilityLabel={`Vis ${k}`}
-              accessibilityHint={isOn ? "Slå filter fra" : "Slå filter til"}
-              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isOn }}
+              accessibilityLabel={`Filter ${k} ${isOn ? "til" : "fra"}`}
             >
-              <Ionicons
-                name={PLACES[k].icon}
-                size={16}
-                color={isOn ? colors.white : colors.text}
-                style={{ marginRight: 6 }}
-              />
+              <Ionicons name={PLACES[k].icon} size={16} color={isOn ? colors.white : colors.text} style={{ marginRight: 6 }} />
               <Text style={[styles.chipText, isOn ? styles.chipTextOn : styles.chipTextOff]}>{k}</Text>
             </Pressable>
           );
         })}
       </View>
 
-      {selected ? (
+      {/* MODAL overlay */}
+      {selected && (
         <View style={styles.modalHost} pointerEvents="box-none">
           <Pressable
             style={styles.modalBackdrop}
             onPress={closeModal}
             accessibilityRole="button"
             accessibilityLabel="Luk"
-            accessibilityHint="Lukker dialogen"
           />
           <Animated.View
             style={[styles.modalCard, modalStyle]}
             accessible
-            accessibilityViewIsModal
+            accessibilityLabel={`${PLACES[selected].label} detaljer`}
+            accessibilityHint="Tryk udenfor for at lukke. Aktiver knappen for at se programmet."
+            accessibilityViewIsModal={true}
             importantForAccessibility="yes"
-            accessibilityLabel={`${PLACES[selected].label} – detaljer`}
           >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle} accessibilityRole="header">
-                {PLACES[selected].label}
-              </Text>
-              <Pressable onPress={closeModal} accessibilityRole="button" accessibilityLabel="Luk dialog">
+              <Text style={styles.modalTitle}>{PLACES[selected].label}</Text>
+              <Pressable onPress={closeModal} accessibilityRole="button" accessibilityLabel="Luk">
                 <Ionicons name="close" size={22} color={colors.white} />
               </Pressable>
             </View>
@@ -319,22 +297,17 @@ export default function ClassicMapCompat() {
             </Text>
 
             <Pressable
-              onPress={() => {
-                closeModal();
-                navigateToProgram(PLACES[selected].boothId);
-              }}
+              onPress={() => { closeModal(); navigateToProgram(PLACES[selected].boothId); }}
               style={({ pressed }) => [styles.modalButton, pressed && styles.pressed]}
               accessibilityRole="button"
               accessibilityLabel={`Vis ${PLACES[selected].label} i Program`}
-              accessibilityHint="Går til Program med filtrering for dette område"
-              hitSlop={8}
             >
               <Ionicons name="list" size={16} style={{ marginRight: 8 }} color="#fff" />
               <Text style={styles.modalButtonText}>Vis i Program</Text>
             </Pressable>
           </Animated.View>
         </View>
-      ) : null}
+      )}
     </View>
   );
 }

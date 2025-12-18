@@ -75,9 +75,10 @@ export default function ProgramChanges() {
   return (
     <SafeAreaView style={{ flex:1 }} edges={['top','bottom']}>
       <View style={{ flex:1, padding:16, paddingTop: 12, gap:12 }}>
+      <Text style={{ fontSize:22, fontWeight:'800', marginBottom:8 }}>Programændringer</Text>
 
       <TextInput
-        placeholder="Skriv en ændring (vises på startskærmen)"
+        placeholder="Skriv en ændring (vises på forsiden når aktiv)…"
         value={text}
         onChangeText={setText}
         multiline
