@@ -13,3 +13,6 @@ Previewe festival tilstand (for at se hvordan appen ser ud når festivalen er i 
 
 Demovideo:
 2. https://www.youtube.com/watch?v=d2q49NoHdps på YouTube.  
+
+Andre kommentarer:
+1. Nogle i gruppen har haft problemer med at få appen til at virke. Det kan være i skal uninstalle expo-dev-client, hvis i oplever samme problem
